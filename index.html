@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+    <body>
+        <h1>Canvas:</h1>
+        <canvas style="border: 1px solid red;" id="canvas" height="300" width="420">Your browser does not support HTML5 Canvas!</canvas>
+    </body>
+
+    <script type="text/javascript">
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const CANVAS_HEIGHT = 300;
+        const CANVAS_WIDTH = 420;
+        const GRID_SQ = 30;
+        const GRID_COLOR = '#555';
+
+        const rects = [
+            { x: 0, y: 0, h: 30, w: 30, color: '#aca' },
+            { x: 120, y: 120, h: 30, w: 30, color: '#456' },
+            { x: 150, y: 30, h: 60, w: 60, color: '#000' }
+        ];
+
+        const selection = {
+            rect: null,
+            offset: null
+        };
+
+        setInterval(draw, 10);
+        canvas.onmousedown = handleMousedown;
+        canvas.onmouseup = handleMouseup;
+
+        function draw() {
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            drawGrid();
+            rects.forEach(drawRect);
+            if (selection.ghost) {
+                drawRect(selection.ghost);
+            }
+        }
+
+        function drawGrid() {
+            ctx.fillStyle = GRID_COLOR;
+            for (let x = 0; x < CANVAS_WIDTH; x += GRID_SQ) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, CANVAS_HEIGHT);
+                ctx.stroke();
+            }
+
+            for (let y = 0; y < CANVAS_HEIGHT; y += GRID_SQ) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(CANVAS_WIDTH, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawRect(rect) {
+            ctx.fillStyle = rect.color;
+            ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+        }
+
+        function findRect(x, y) {
+            for (let i = 0; i < rects.length; i++) {
+                rect = rects[i];
+                if (x >= rect.x && x <= rect.x + rect.w &&
+                    y >= rect.y && y <= rect.y + rect.h) {
+                    return rect;
+                }
+            }
+            return null;
+        }
+
+        function snapSelectionToGrid(x, y) {
+            [gridX, gridY] = getGridCoordsFromCanvasCoords(x, y);
+            selection.rect.x = gridX * GRID_SQ;
+            selection.rect.y = gridY * GRID_SQ;
+        }
+
+        function getGridCoordsFromCanvasCoords(canvasX, canvasY) {
+            return [Math.floor(canvasX / GRID_SQ), Math.floor(canvasY / GRID_SQ)];
+        }
+
+        function beginDrag(rect, clickX, clickY) {
+            selection.rect = rect;
+            selection.ghost = {
+                x: rect.x,
+                y: rect.y,
+                w: rect.w,
+                h: rect.h,
+                color: rect.color + 'a'
+            };
+            console.log(selection.ghost.color);
+            selection.offset = { x: clickX - rect.x, y: clickY - rect.y };
+            canvas.onmousemove = handleMousemove;
+        }
+
+        function endDrag() {
+            selection.rect = null;
+            selection.ghost = null;
+            canvas.onmousemove = null;
+        }
+
+        function handleMousedown(e) {
+            const clickX = e.pageX - canvas.offsetLeft;
+            const clickY = e.pageY - canvas.offsetTop;
+            const rect = findRect(clickX, clickY);
+            if (rect) beginDrag(rect, clickX, clickY);
+        }
+
+        function handleMousemove(e) {
+            if (selection.rect) {
+                selection.ghost.x = e.pageX - canvas.offsetLeft - selection.offset.x;
+                selection.ghost.y = e.pageY - canvas.offsetTop - selection.offset.y;
+            }
+        }
+
+        function handleMouseup(e) {
+            const clickX = e.pageX - canvas.offsetLeft;
+            const clickY = e.pageY - canvas.offsetTop;
+            snapSelectionToGrid(clickX, clickY);
+            endDrag();
+        }
+
+        function handleMouseleave() {
+            // TODO
+        }
+    </script>
+</html>
