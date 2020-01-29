@@ -34,12 +34,12 @@
             drawGrid();
             rects.forEach(drawRect);
             if (selection.ghost) {
-                drawRect(selection.ghost);
+                drawGhost();
             }
         }
 
         function drawGrid() {
-            ctx.fillStyle = GRID_COLOR;
+            ctx.strokeStyle = GRID_COLOR;
             for (let x = 0; x < CANVAS_WIDTH; x += GRID_SQ) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
@@ -60,6 +60,19 @@
             ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
         }
 
+        function drawGhost() {
+            drawRect(selection.ghost);
+            ctx.strokeStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.moveTo(...getCenter(selection.rect));
+            ctx.lineTo(...getCenter(selection.ghost));
+            ctx.stroke();
+        }
+
+        function getCenter(rect) {
+            return [rect.x + rect.w / 2, rect.y + rect.h / 2];
+        }
+
         function findRect(x, y) {
             for (let i = 0; i < rects.length; i++) {
                 rect = rects[i];
@@ -69,12 +82,6 @@
                 }
             }
             return null;
-        }
-
-        function snapSelectionToGrid(x, y) {
-            [gridX, gridY] = getGridCoordsFromCanvasCoords(x, y);
-            selection.rect.x = gridX * GRID_SQ;
-            selection.rect.y = gridY * GRID_SQ;
         }
 
         function getGridCoordsFromCanvasCoords(canvasX, canvasY) {
@@ -90,8 +97,8 @@
                 h: rect.h,
                 color: rect.color + 'a'
             };
-            console.log(selection.ghost.color);
-            selection.offset = { x: clickX - rect.x, y: clickY - rect.y };
+            const [gridOffsetX, gridOffsetY] = getGridCoordsFromCanvasCoords(clickX - rect.x, clickY - rect.y);
+            selection.gridOffset = { x: gridOffsetX, y: gridOffsetY };
             canvas.onmousemove = handleMousemove;
         }
 
@@ -110,15 +117,21 @@
 
         function handleMousemove(e) {
             if (selection.rect) {
-                selection.ghost.x = e.pageX - canvas.offsetLeft - selection.offset.x;
-                selection.ghost.y = e.pageY - canvas.offsetTop - selection.offset.y;
+                const clickX = e.pageX - canvas.offsetLeft;
+                const clickY = e.pageY - canvas.offsetTop;
+                const [gridX, gridY] = getGridCoordsFromCanvasCoords(clickX, clickY);
+                selection.ghost.x = (gridX - selection.gridOffset.x) * GRID_SQ;
+                selection.ghost.y = (gridY - selection.gridOffset.y) * GRID_SQ;
             }
         }
 
         function handleMouseup(e) {
             const clickX = e.pageX - canvas.offsetLeft;
             const clickY = e.pageY - canvas.offsetTop;
-            snapSelectionToGrid(clickX, clickY);
+            if (selection.rect) {
+                selection.rect.x = selection.ghost.x;
+                selection.rect.y = selection.ghost.y;
+            }
             endDrag();
         }
 
