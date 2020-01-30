@@ -1,0 +1,24 @@
+{
+  "name": "rpg-map-simulator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:dev": "webpack-dev-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codyjs/rpg-battlemap-sim.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/codyjs/rpg-battlemap-sim/issues"
+  },
+  "homepage": "https://github.com/codyjs/rpg-battlemap-sim#readme",
+  "devDependencies": {
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.10.1"
+  }
+}
