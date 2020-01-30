@@ -4,4 +4,6 @@
 
 ### Development
 
-* `npm run start:dev` starts dev server on localhost:8080
+* `npm run webpack` starts webpack dev server on localhost:8080
+* `npm run api` starts express server on localhost:3000
+

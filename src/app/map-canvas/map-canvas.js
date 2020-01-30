@@ -1,9 +1,8 @@
 import * as constants from './constants';
 
 export class MapCanvas {
-    constructor(canvas) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext('2d');
+    constructor(canvasRef) {
+        this.canvasRef = canvasRef;
         this.selection = {
             rect: null,
             offset: null
@@ -11,11 +10,16 @@ export class MapCanvas {
         this.rects = [];
     }
 
-    init(initRects) {
-        setInterval(() => this.draw(), 10);
-        this.canvas.onmousedown = (e) => this.beginDrag(e);
-        this.canvas.onmouseup = (e) => this.endDrag(e);
-        initRects.forEach(initRect => this.rects.push(initRect));
+    init() {
+        this.canvasRef.current.width = constants.CANVAS_WIDTH;
+        this.canvasRef.current.height = constants.CANVAS_HEIGHT;
+        this.drawInterval = setInterval(() => this.draw(), 10);
+        this.canvasRef.current.onmousedown = (e) => this.beginDrag(e);
+        this.canvasRef.current.onmouseup = (e) => this.endDrag(e);
+    }
+
+    addPieces(pieces) {
+        pieces.forEach(piece => this.rects.push(piece));
     }
 
     beginDrag(e) {
@@ -34,7 +38,7 @@ export class MapCanvas {
             };
             const [gridX, gridY] = this.getGridCoordsFromCanvasCoords(clickX, clickY);
             this.selection.gridOffset = { x: gridX - rect.x, y: gridY - rect.y };
-            this.canvas.onmousemove = (e) => this.handleMousemove(e);
+            this.canvasRef.current.onmousemove = (e) => this.handleMousemove(e);
         }
     }
 
@@ -47,18 +51,23 @@ export class MapCanvas {
         }
     }
 
-    endDrag () {
+    endDrag() {
         if (this.selection.rect) {
             this.selection.rect.x = this.selection.ghost.x;
             this.selection.rect.y = this.selection.ghost.y;
         }
         this.selection.rect = null;
         this.selection.ghost = null;
-        this.canvas.onmousemove = null;
+        this.canvasRef.current.onmousemove = null;
+    }
+
+    dispose() {
+        clearInterval(this.drawInterval);
     }
 
     draw() {
-        this.ctx.clearRect(0, 0, constants.CANVAS_WIDTH, constants.CANVAS_HEIGHT);
+        const ctx = this.canvasRef.current.getContext('2d');
+        ctx.clearRect(0, 0, constants.CANVAS_WIDTH, constants.CANVAS_HEIGHT);
         this.drawGrid();
         this.rects.forEach(rect => this.drawRect(rect));
         if (this.selection.ghost) {
@@ -67,41 +76,44 @@ export class MapCanvas {
     }
 
     drawGrid() {
-        this.ctx.strokeStyle = constants.GRID_COLOR;
+        const ctx = this.canvasRef.current.getContext('2d');
+        ctx.strokeStyle = constants.GRID_COLOR;
         for (let x = 0; x < constants.CANVAS_WIDTH; x += constants.GRID_SQ) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, 0);
-            this.ctx.lineTo(x, constants.CANVAS_HEIGHT);
-            this.ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, constants.CANVAS_HEIGHT);
+            ctx.stroke();
         }
         for (let y = 0; y < constants.CANVAS_HEIGHT; y += constants.GRID_SQ) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(0, y);
-            this.ctx.lineTo(constants.CANVAS_WIDTH, y);
-            this.ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(constants.CANVAS_WIDTH, y);
+            ctx.stroke();
         }
     }
 
     drawRect(rect) {
+        const ctx = this.canvasRef.current.getContext('2d');
         if (rect.image && rect.loaded) {
-            this.ctx.drawImage(rect.image, rect.x * constants.GRID_SQ, rect.y * constants.GRID_SQ,
+            ctx.drawImage(rect.image, rect.x * constants.GRID_SQ, rect.y * constants.GRID_SQ,
                 rect.w * constants.GRID_SQ, rect.h * constants.GRID_SQ)
         } else {
-            this.ctx.fillStyle = rect.color;
-            this.ctx.fillRect(rect.x * constants.GRID_SQ, rect.y * constants.GRID_SQ,
+            ctx.fillStyle = rect.color;
+            ctx.fillRect(rect.x * constants.GRID_SQ, rect.y * constants.GRID_SQ,
                 rect.w * constants.GRID_SQ, rect.h * constants.GRID_SQ);
         }
     }
 
     drawGhost() {
-        this.ctx.globalAlpha = 0.5;
+        const ctx = this.canvasRef.current.getContext('2d');
+        ctx.globalAlpha = 0.5;
         this.drawRect(this.selection.ghost);
-        this.ctx.globalAlpha = 1;
-        this.ctx.strokeStyle = '#ff0000';
-        this.ctx.beginPath();
-        this.ctx.moveTo(...this.getCenter(this.selection.rect));
-        this.ctx.lineTo(...this.getCenter(this.selection.ghost));
-        this.ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.moveTo(...this.getCenter(this.selection.rect));
+        ctx.lineTo(...this.getCenter(this.selection.ghost));
+        ctx.stroke();
     }
 
     // Utility functions
@@ -126,7 +138,7 @@ export class MapCanvas {
     }
 
     getClickCoords(e) {
-        return [e.pageX - this.canvas.offsetLeft, e.pageY - this.canvas.offsetTop];
+        return [e.pageX - this.canvasRef.current.offsetLeft, e.pageY - this.canvasRef.current.offsetTop];
     }
 
     getCenter(rect) {
