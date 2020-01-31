@@ -1,4 +1,5 @@
 import { createElement, Fragment, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { MapCanvas } from './map-canvas';
 
 function loadImage(piece) {
@@ -13,23 +14,35 @@ export const MapCanvasContainer = (props) => {
     const canvasRef = useRef({});
     useEffect(() => {
         let mapCanvas = null;
-        let cleanup = () => { mapCanvas && mapCanvas.dispose() };
+        let ws = new WebSocket(`ws://localhost:3000/api/rooms/${props.room.id}`);
+        let cleanup = () => {
+            mapCanvas && mapCanvas.dispose();
+            ws.send('leave');
+            ws.close();
+        };
+        ws.onopen = function(event) {
+            ws.send('getPieces')
+        };
 
-        fetch(`/api/rooms/${props.room.id}/pieces`)
-            .then(response => response.json())
-            .then(pieces => {
+        ws.onmessage = function(event) {
+            const payload = JSON.parse(event.data);
+            switch(payload.type) {
+            case 'getPieces':
+                const pieces = payload.data;
                 pieces.forEach(loadImage);
                 mapCanvas = new MapCanvas(canvasRef);
                 mapCanvas.addPieces(pieces);
                 mapCanvas.init();
-            });
+                break;
+            }
+        };
 
         return cleanup;
     }, []);
 
     return (
         <Fragment>
-            <button onClick={() => props.goBack()}>Leave Room</button>
+            <Link to="/">Leave Room</Link>
             <br></br>
             <canvas style={{border: '1px solid red'}} ref={canvasRef} id="map-canvas">
                 Your browser does not support HTML5 Canvas!

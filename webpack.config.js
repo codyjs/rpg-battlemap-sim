@@ -1,15 +1,21 @@
 
+const path = require('path');
+
 module.exports = {
     context: __dirname,
     entry: './src/app/index.jsx',
     devServer: {
-        contentBase: ['./src/assets'],
+        contentBase: ['./src/server/public'],
         proxy: {
             '/api': 'http://localhost:3000'
         }
     },
     resolve: {
         extensions: ['.jsx', '.js']
+    },
+    mode: 'development',
+    output: {
+        path: path.resolve(__dirname, './src/server/public/dist')
     },
     module: {
         rules: [

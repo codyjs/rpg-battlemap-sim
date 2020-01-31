@@ -1,10 +1,12 @@
 import { createElement, useState, Fragment, useEffect } from 'react';
-import { MapCanvasContainer } from './map-canvas';
-import { RoomListing } from './room-listing';
+import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+import { MainMenu } from './main-menu';
+import { Room } from './room';
+import { CreateRoom } from './create-room';
 
 export const App = () => {
     const [rooms, setRooms] = useState([]);
-    const [selectedRoom, setSelectedRoom] = useState(null);
+
 
     useEffect(() => {
         fetch('/api/rooms')
@@ -13,18 +15,18 @@ export const App = () => {
     }, []);
 
     return (
-        <Fragment>
-            {selectedRoom ? (
-                <MapCanvasContainer room={selectedRoom} goBack={() => setSelectedRoom(null)} />
-            ) : (
-                <Fragment>
-                    <h1>Main Menu</h1>
-                    {rooms.length === 0
-                        ? <p>Loading...</p>
-                        : <ul>{rooms.map(room => <RoomListing room={room} key={room.id} onSelect={setSelectedRoom} />)}</ul>
-                    }
-                </Fragment>
-            )}
-        </Fragment>
+        <Router>
+            <Switch>
+                <Route path="/rooms/:roomId">
+                    <Room rooms={rooms} />
+                </Route>
+                <Route path="/create-room">
+                    <CreateRoom onCreate={room => { setRooms(rooms.concat([room])); }} />
+                </Route>
+                <Route path="/">
+                    <MainMenu rooms={rooms} />
+                </Route>
+            </Switch>
+        </Router>
     );
 };

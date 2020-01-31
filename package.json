@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "webpack": "webpack-dev-server",
-    "api": "node ./src/server/bin/www"
+    "webpack": "webpack-cli --watch",
+    "api": "node ./src/server/index.js"
   },
   "repository": {
     "type": "git",
@@ -30,8 +30,10 @@
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "express": "~4.16.1",
+    "express-ws": "^4.0.0",
     "morgan": "~1.9.1",
     "react": "^16.12.0",
-    "react-dom": "^16.12.0"
+    "react-dom": "^16.12.0",
+    "react-router-dom": "^5.1.2"
   }
 }

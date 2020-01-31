@@ -2,35 +2,60 @@ const express = require('express');
 const router = express.Router();
 
 const rooms = [
-  { name: 'My Room', id: 1 },
-  { name: 'Another room', id: 2 }
+  {
+    name: 'My Room',
+    id: 1,
+    pieces: [
+      { x: 5, y: 3, h: 1, w: 1, color: '#aca', imageUrl: '/images/Tarl.png' },
+      { x: 7, y: 5, h: 1, w: 1, color: '#456', imageUrl: '/images/Kor\'tan.png' },
+      { x: 6, y: 3, h: 2, w: 2, color: '#000', imageUrl: '/images/owlbear.png' },
+      { x: 6, y: 6, h: 1, w: 1, color: '#537', imageUrl: '/images/assassin.png' }
+    ],
+    connections: []
+  }, {
+    name: 'Another room',
+    id: 2,
+    pieces: [
+      { x: 0, y: 0, h: 1, w: 1, color: '#456', imageUrl: '/images/Kor\'tan.png' },
+      { x: 7, y: 7, h: 2, w: 2, color: '#000', imageUrl: '/images/owlbear.png' },
+    ],
+    connections: []
+  }
 ];
-
-const roomPieces = {
-  1: [
-    { x: 5, y: 3, h: 1, w: 1, color: '#aca', imageUrl: '/api/assets/Tarl.png' },
-    { x: 7, y: 5, h: 1, w: 1, color: '#456', imageUrl: '/api/assets/Kor\'tan.png' },
-    { x: 6, y: 3, h: 2, w: 2, color: '#000', imageUrl: '/api/assets/owlbear.png' },
-    { x: 6, y: 6, h: 1, w: 1, color: '#537', imageUrl: '/api/assets/assassin.png' }
-  ],
-  2: [
-    { x: 0, y: 0, h: 1, w: 1, color: '#456', imageUrl: '/api/assets/Kor\'tan.png' },
-    { x: 7, y: 7, h: 2, w: 2, color: '#000', imageUrl: '/api/assets/owlbear.png' },
-  ]
-}
 
 /* GET rooms listing. */
 router.get('/', function(req, res, next) {
-  res.send(rooms);
+  res.send(rooms.map(room => ({name: room.name, id: room.id })));
 });
 
-router.get('/:id/pieces', function(req, res, next) {
-  const pieces = getPiecesForRoom(req.params.id);
-  res.send(pieces || []);
+router.ws('/:id', function(ws, req) {
+  try {
+    const room = getRoomById(parseInt(req.params.id));
+    room.connections.push(ws);
+  
+    ws.on('message', function(msg) {
+      switch(msg) {
+        case 'leave':
+          room.connections.splice(room.connections.indexOf(ws));
+          break;
+        case 'getPieces':
+          const payload = {
+            type: 'getPieces',
+            data: room.pieces
+          }
+          ws.send(JSON.stringify(payload));
+          break;
+      }
+      console.log('got message: ', msg);
+    });
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
 });
 
-function getPiecesForRoom(roomId) {
-  return roomPieces[roomId];
+function getRoomById(roomId) {
+  return rooms.find(room => room.id === roomId);
 }
 
 module.exports = router;

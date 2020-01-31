@@ -1,8 +1,9 @@
 import { createElement } from 'react';
+import { Link } from 'react-router-dom';
 
 export const RoomListing = (props) => {
     return (
     <li>
-        <button onClick={() => props.onSelect(props.room)}>{props.room.name}</button>
+        <Link to={`/rooms/${props.room.id}`}>{props.room.name}</Link>
     </li>);
 };
