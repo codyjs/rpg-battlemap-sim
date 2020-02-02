@@ -28,6 +28,15 @@ router.get('/', function(req, res, next) {
   res.send(rooms.map(room => ({name: room.name, id: room.id })));
 });
 
+/* POST new room */
+router.post('/', function(req, res, next) {
+  const room = req.body;
+  console.log(req.body);
+  room.id = rooms.map(room => room.id).reduce(Math.max) + 1;
+  rooms.push(room);
+  res.send(room.id);
+});
+
 router.ws('/:id', function(ws, req) {
   try {
     const room = getRoomById(parseInt(req.params.id));

@@ -15,18 +15,20 @@ export const App = () => {
     }, []);
 
     return (
-        <Router>
-            <Switch>
-                <Route path="/rooms/:roomId">
-                    <Room rooms={rooms} />
-                </Route>
-                <Route path="/create-room">
-                    <CreateRoom onCreate={room => { setRooms(rooms.concat([room])); }} />
-                </Route>
-                <Route path="/">
-                    <MainMenu rooms={rooms} />
-                </Route>
-            </Switch>
-        </Router>
+        <div id="page-container" style={{display: 'flex'}}>
+            <Router>
+                <Switch>
+                    <Route path="/rooms/:roomId">
+                        <Room rooms={rooms} />
+                    </Route>
+                    <Route path="/create-room">
+                        <CreateRoom onCreate={room => { setRooms(rooms.concat([room])); }} />
+                    </Route>
+                    <Route path="/">
+                        <MainMenu rooms={rooms} />
+                    </Route>
+                </Switch>
+            </Router>
+        </div>
     );
 };
