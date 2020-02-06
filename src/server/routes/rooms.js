@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const upload = require('multer')({ dest: 'backdrops/'})
 
 const rooms = [
   {
@@ -29,12 +30,14 @@ router.get('/', function(req, res, next) {
 });
 
 /* POST new room */
-router.post('/', function(req, res, next) {
-  const room = req.body;
+router.post('/', upload.single('backdrop'), function(req, res, next) {
+  const room = JSON.parse(req.body.data);
   console.log(req.body);
-  room.id = rooms.map(room => room.id).reduce(Math.max) + 1;
+  room.image = req.file;
+  console.log(room);
+  room.id = rooms.map(room => room.id).reduce((prev, current) => Math.max(prev, current)) + 1;
   rooms.push(room);
-  res.send(room.id);
+  res.send({ roomId: room.id });
 });
 
 router.ws('/:id', function(ws, req) {
