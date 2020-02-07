@@ -17,3 +17,13 @@ input[type="file"] {
     padding: 6px 12px;
     cursor: pointer;
 }
+
+.left-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #55b;
+    width: 200px;
+    margin-right: 10px;
+    padding: 4px;
+}

@@ -1,24 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('multer')({ dest: 'backdrops/'})
+const multer = require('multer');
 
 const rooms = [
   {
     name: 'My Room',
     id: 1,
+    backdrop: {
+      image: 'Hidden Altar.jpg',
+      w: 748, h: 544
+    },
+    grid: {
+      x: 34, y: 34, w: 20, h: 14, tileSize: 34
+    },
     pieces: [
-      { x: 5, y: 3, h: 1, w: 1, color: '#aca', imageUrl: '/images/Tarl.png' },
-      { x: 7, y: 5, h: 1, w: 1, color: '#456', imageUrl: '/images/Kor\'tan.png' },
-      { x: 6, y: 3, h: 2, w: 2, color: '#000', imageUrl: '/images/owlbear.png' },
-      { x: 6, y: 6, h: 1, w: 1, color: '#537', imageUrl: '/images/assassin.png' }
-    ],
-    connections: []
-  }, {
-    name: 'Another room',
-    id: 2,
-    pieces: [
-      { x: 0, y: 0, h: 1, w: 1, color: '#456', imageUrl: '/images/Kor\'tan.png' },
-      { x: 7, y: 7, h: 2, w: 2, color: '#000', imageUrl: '/images/owlbear.png' },
+      { x: 5, y: 3, h: 1, w: 1, color: '#aca', image: 'Tarl.png' },
+      { x: 7, y: 5, h: 1, w: 1, color: '#456', image: 'Kor\'tan.png' },
+      { x: 6, y: 3, h: 2, w: 2, color: '#000', image: 'owlbear.png' },
+      { x: 6, y: 6, h: 1, w: 1, color: '#537', image: 'assassin.png' }
     ],
     connections: []
   }
@@ -30,10 +29,8 @@ router.get('/', function(req, res, next) {
 });
 
 /* POST new room */
-router.post('/', upload.single('backdrop'), function(req, res, next) {
-  const room = JSON.parse(req.body.data);
-  console.log(req.body);
-  room.image = req.file;
+router.post('/', function(req, res) {
+  const room = req.body;
   console.log(room);
   room.id = rooms.map(room => room.id).reduce((prev, current) => Math.max(prev, current)) + 1;
   rooms.push(room);
@@ -50,10 +47,13 @@ router.ws('/:id', function(ws, req) {
         case 'leave':
           room.connections.splice(room.connections.indexOf(ws));
           break;
-        case 'getPieces':
+        case 'getRoomData':
           const payload = {
-            type: 'getPieces',
-            data: room.pieces
+            type: 'getRoomData',
+            grid: room.grid,
+            pieces: room.pieces,
+            backdrop: room.backdrop,
+            roomName: room.name
           }
           ws.send(JSON.stringify(payload));
           break;

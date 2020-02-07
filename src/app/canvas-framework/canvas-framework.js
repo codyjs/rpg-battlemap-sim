@@ -18,7 +18,23 @@ export class CanvasFramework {
     }
 
     addRect(rect) {
-        this.rects.splice(0, 0, rect);
+        this.rects.push(rect);
+        this.sortRects();
+    }
+
+    sortRects() {
+        this.rects.sort((a, b) => {
+            if (a.renderPriority && !b.renderPriority) return 1;
+            if (!a.renderPriority && b.renderPriority) return -1;
+            if (!a.renderPriority && !b.renderPriority) return 0;
+            return a.renderPriority - b.renderPriority;
+        });
+    }
+
+    removeRect(rect) {
+        const rectIndex = this.rects.indexOf(rect);
+        if (rectIndex === -1) return;
+        this.rects.splice(rectIndex, 1);
     }
 
     draw() {
@@ -29,6 +45,7 @@ export class CanvasFramework {
 
     drawGrid(grid) {
         const ctx = this.getContext();
+        ctx.strokeStyle = '#000000';
         for (let x = grid.x; x <= grid.x + grid.w * grid.tileSize; x += grid.tileSize) {
             ctx.beginPath();
             ctx.moveTo(x, grid.y);
@@ -41,6 +58,18 @@ export class CanvasFramework {
             ctx.lineTo(grid.x + grid.w * grid.tileSize, y);
             ctx.stroke();
         }
+    }
+
+    drawGhost(ghost) {
+        const ctx = this.canvasRef.current.getContext('2d');
+        ctx.globalAlpha = 0.5;
+        if (ghost.image) ctx.drawImage(ghost.image, ghost.x, ghost.y, ghost.image.width, ghost.image.height);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.moveTo(...this.getCenter(this.selectedRect));
+        ctx.lineTo(...this.getCenter({ x: ghost.x, y: ghost.y, w: ghost.image.width, h: ghost.image.height }));
+        ctx.stroke();
     }
 
     drawRect(rect) {
@@ -57,7 +86,10 @@ export class CanvasFramework {
             ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
             break;
         case 'image':
-            ctx.drawImage(rect.image, rect.x, rect.y, rect.image.width, rect.image.height);
+            if (rect.image) ctx.drawImage(rect.image, rect.x, rect.y, rect.image.width, rect.image.height);
+            break;
+        case 'ghost':
+            this.drawGhost(rect);
             break;
         case 'grid':
             this.drawGrid(rect);
@@ -68,18 +100,20 @@ export class CanvasFramework {
     handleMouseDown(e) {
         const [mouseX, mouseY] = this.getMouseCoords(e);
         this.selectedRect = this.findRectAt(mouseX, mouseY);
-        this.selectedRectOffset = {
-            x: mouseX - this.selectedRect.x,
-            y: mouseY - this.selectedRect.y
-        };
-        if (this.selectedRect && this.selectedRect.handleMouseDown) {
-            this.selectedRect.handleMouseDown({
-                mouseX,
-                mouseY,
-                rectX: mouseX - selectedRect.x,
-                rectY: mouseY - selectedRect.y,
-                event: e
-            });
+        if (this.selectedRect) {
+            this.selectedRectOffset = {
+                x: mouseX - this.selectedRect.x,
+                y: mouseY - this.selectedRect.y
+            };
+            if (this.selectedRect.handleMouseDown) {
+                this.selectedRect.handleMouseDown({
+                    mouseX,
+                    mouseY,
+                    rectX: mouseX - selectedRect.x,
+                    rectY: mouseY - selectedRect.y,
+                    event: e
+                });
+            }
         }
     }
 
@@ -97,7 +131,7 @@ export class CanvasFramework {
             const rect = this.findRectAt(mouseX, mouseY);
             if (rect) {
                 if (this.hoverRect && this.hoverRect !== rect) {
-                    this.hoverRect.handleHoverEnd();
+                    if (this.hoverRect.handleHoverEnd) this.hoverRect.handleHoverEnd();
                 }
                 this.hoverRect = rect;
     
@@ -114,12 +148,12 @@ export class CanvasFramework {
 
     handleMouseUp(e) {
         const [mouseX, mouseY] = this.getMouseCoords(e);
-        if (this.selectedRect && this.selectedRect.handleMouseUp) {
-            this.selectedRect.handleMouseUp({
+        if (this.selectedRect && this.selectedRect.handleDragEnd) {
+            this.selectedRect.handleDragEnd({
                 mouseX,
                 mouseY,
-                rectX: mouseX - selectedRect.x,
-                rectY: mouseY - selectedRect.y,
+                xOffset: this.selectedRectOffset.x,
+                yOffset: this.selectedRectOffset.y,
                 event: e
             });
         }
@@ -144,6 +178,10 @@ export class CanvasFramework {
             }
         }
         return null;
+    }
+
+    getCenter(rect) {
+        return [rect.x + rect.w / 2, rect.y + rect.h / 2];
     }
 
     dispose() {

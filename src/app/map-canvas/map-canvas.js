@@ -1,148 +1,108 @@
-import * as constants from './constants';
+import { CanvasFramework } from '../canvas-framework/canvas-framework';
 
 export class MapCanvas {
     constructor(canvasRef) {
         this.canvasRef = canvasRef;
-        this.selection = {
-            rect: null,
-            offset: null
-        };
-        this.rects = [];
+        this.canvasFramework = new CanvasFramework(canvasRef);
     }
 
     init() {
-        this.canvasRef.current.width = constants.CANVAS_WIDTH;
-        this.canvasRef.current.height = constants.CANVAS_HEIGHT;
-        this.drawInterval = setInterval(() => this.draw(), 10);
-        this.canvasRef.current.onmousedown = (e) => this.beginDrag(e);
-        this.canvasRef.current.onmouseup = (e) => this.endDrag(e);
+        this.canvasHeight = this.canvasRef.current.scrollHeight;
+        this.canvasWidth = this.canvasRef.current.scrollWidth;
+        this.canvasRef.current.height = this.canvasHeight;
+        this.canvasRef.current.width = this.canvasWidth;
+        this.canvasFramework.init();
     }
 
     addPieces(pieces) {
-        pieces.forEach(piece => this.rects.push(piece));
-    }
-
-    beginDrag(e) {
-        const [clickX, clickY] = this.getClickCoords(e);
-        const rect = this.findRect(clickX, clickY);
-        if (rect) {
-            this.selection.rect = rect;
-            this.selection.ghost = {
-                x: rect.x,
-                y: rect.y,
-                w: rect.w,
-                h: rect.h,
-                color: rect.color + 'a',
-                image: rect.image,
-                loaded: rect.loaded
+        pieces.forEach(piece => {
+            const canvasPiece = {
+                drawType: 'image',
+                x: piece.x * this.grid.tileSize + this.grid.x,
+                y: piece.y * this.grid.tileSize + this.grid.y,
+                h: piece.h * this.grid.tileSize,
+                w: piece.w * this.grid.tileSize,
+                renderPriority: 3
             };
-            const [gridX, gridY] = this.getGridCoordsFromCanvasCoords(clickX, clickY);
-            this.selection.gridOffset = { x: gridX - rect.x, y: gridY - rect.y };
-            this.canvasRef.current.onmousemove = (e) => this.handleMousemove(e);
+
+            canvasPiece.handleDrag = ({ mouseX, mouseY, xOffset, yOffset }) => {
+                const [gridX, gridY] = this.getGridCoordsFromCanvasCoords(mouseX - this.grid.x, mouseY - this.grid.x);
+                const [gridOffsetX, gridOffsetY] = this.getGridCoordsFromCanvasCoords(xOffset, yOffset);
+                if (!this.ghost) {
+                    this.ghost = {
+                        w: canvasPiece.w * this.grid.tileSize,
+                        h: canvasPiece.h * this.grid.tileSize,
+                        image: canvasPiece.image,
+                        loaded: canvasPiece.loaded,
+                        drawType: 'ghost',
+                        renderPriority: 3
+                    };
+                    this.canvasFramework.addRect(this.ghost);
+                }
+                this.ghost.x = gridX * this.grid.tileSize + this.grid.x - gridOffsetX * this.grid.tileSize;
+                this.ghost.y = gridY * this.grid.tileSize + this.grid.y - gridOffsetY * this.grid.tileSize;
+            };
+
+            canvasPiece.handleDragEnd = () => {
+                if (this.ghost) {
+                    canvasPiece.x = this.ghost.x;
+                    canvasPiece.y = this.ghost.y;
+                    this.canvasFramework.removeRect(this.ghost);
+                    this.ghost = null;
+                }
+            };
+
+            const pieceImg = new Image();
+            pieceImg.src = '/images/pieces/' + piece.image;
+            pieceImg.onload = () => {
+                pieceImg.height = canvasPiece.h;
+                pieceImg.width = canvasPiece.w;
+                canvasPiece.image = pieceImg;
+            }
+            this.canvasFramework.addRect(canvasPiece);
+        });
+    }
+
+    setBackdrop(backdropData) {
+        if (this.backdrop) {
+            this.canvasFramework.removeRect(this.backdrop);
+        }
+        this.backdrop = {
+            x: 0, y: 0,
+            image: new Image(),
+            drawType: 'image',
+            renderPriority: 0
+        };
+        this.backdrop.image.src = '/images/backdrops/' + backdropData.image;
+        this.backdrop.image.onload = () => {
+            this.backdrop.image.height = backdropData.h;
+            this.backdrop.image.width = backdropData.w;
+            this.canvasFramework.addRect(this.backdrop);
         }
     }
 
-    handleMousemove(e) {
-        if (this.selection.rect) {
-            const [clickX, clickY] = this.getClickCoords(e);
-            const [gridX, gridY] = this.getGridCoordsFromCanvasCoords(clickX, clickY);
-            this.selection.ghost.x = gridX - this.selection.gridOffset.x;
-            this.selection.ghost.y = gridY - this.selection.gridOffset.y;
+    setGrid(grid) {
+        if (this.grid) {
+            this.canvasFramework.removeRect(this.grid);
         }
-    }
-
-    endDrag() {
-        if (this.selection.rect) {
-            this.selection.rect.x = this.selection.ghost.x;
-            this.selection.rect.y = this.selection.ghost.y;
-        }
-        this.selection.rect = null;
-        this.selection.ghost = null;
-        this.canvasRef.current.onmousemove = null;
+        this.grid = grid;
+        this.grid.drawType = 'grid';
+        this.grid.renderPriority = 1;
+        this.canvasFramework.addRect(this.grid);
     }
 
     dispose() {
-        clearInterval(this.drawInterval);
-    }
-
-    draw() {
-        const ctx = this.canvasRef.current.getContext('2d');
-        ctx.clearRect(0, 0, constants.CANVAS_WIDTH, constants.CANVAS_HEIGHT);
-        this.drawGrid();
-        this.rects.forEach(rect => this.drawRect(rect));
-        if (this.selection.ghost) {
-            this.drawGhost();
-        }
-    }
-
-    drawGrid() {
-        const ctx = this.canvasRef.current.getContext('2d');
-        ctx.strokeStyle = constants.GRID_COLOR;
-        for (let x = 0; x < constants.CANVAS_WIDTH; x += constants.GRID_SQ) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, constants.CANVAS_HEIGHT);
-            ctx.stroke();
-        }
-        for (let y = 0; y < constants.CANVAS_HEIGHT; y += constants.GRID_SQ) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(constants.CANVAS_WIDTH, y);
-            ctx.stroke();
-        }
-    }
-
-    drawRect(rect) {
-        const ctx = this.canvasRef.current.getContext('2d');
-        if (rect.image && rect.loaded) {
-            ctx.drawImage(rect.image, rect.x * constants.GRID_SQ, rect.y * constants.GRID_SQ,
-                rect.w * constants.GRID_SQ, rect.h * constants.GRID_SQ)
-        } else {
-            ctx.fillStyle = rect.color;
-            ctx.fillRect(rect.x * constants.GRID_SQ, rect.y * constants.GRID_SQ,
-                rect.w * constants.GRID_SQ, rect.h * constants.GRID_SQ);
-        }
-    }
-
-    drawGhost() {
-        const ctx = this.canvasRef.current.getContext('2d');
-        ctx.globalAlpha = 0.5;
-        this.drawRect(this.selection.ghost);
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = '#ff0000';
-        ctx.beginPath();
-        ctx.moveTo(...this.getCenter(this.selection.rect));
-        ctx.lineTo(...this.getCenter(this.selection.ghost));
-        ctx.stroke();
+        this.canvasFramework.dispose();
     }
 
     // Utility functions
 
-    findRect(x, y) {
-        let rect = null;
-        for (let i = 0; i < this.rects.length; i++) {
-            rect = this.rects[i];
-            if (x >= rect.x * constants.GRID_SQ &&
-                x <= rect.x * constants.GRID_SQ + rect.w * constants.GRID_SQ &&
-                y >= rect.y * constants.GRID_SQ &&
-                y <= rect.y * constants.GRID_SQ + rect.h * constants.GRID_SQ) {
-                return rect;
-            }
-        }
-        return null;
-    }
-
     getGridCoordsFromCanvasCoords(canvasX, canvasY) {
-        return [Math.floor(canvasX / constants.GRID_SQ),
-                Math.floor(canvasY / constants.GRID_SQ)];
+        return [Math.floor(canvasX / this.grid.tileSize),
+                Math.floor(canvasY / this.grid.tileSize)];
     }
 
     getClickCoords(e) {
         return [e.pageX - this.canvasRef.current.offsetLeft, e.pageY - this.canvasRef.current.offsetTop];
-    }
-
-    getCenter(rect) {
-        return [rect.x * constants.GRID_SQ + rect.w * constants.GRID_SQ / 2,
-                rect.y * constants.GRID_SQ + rect.h * constants.GRID_SQ / 2];
     }
 }

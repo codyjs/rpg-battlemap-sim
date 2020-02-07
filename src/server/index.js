@@ -6,6 +6,7 @@ const enableWebsockets = require('express-ws');
 const app = express();
 enableWebsockets(app);
 const roomsRouter = require('./routes/rooms');
+const imagesRouter = require('./routes/images');
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -13,6 +14,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use('/api/rooms', roomsRouter);
+app.use('/api/images', imagesRouter);
 
 app.use('/', express.static('./src/server/public'));
 

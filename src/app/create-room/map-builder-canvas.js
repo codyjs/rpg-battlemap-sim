@@ -1,4 +1,4 @@
-import { CanvasFramework } from "../canvas-framework/canvas-framework";
+import { CanvasFramework } from "../canvas-framework";
 
 export class MapBuilderCanvas {
     constructor(canvasRef) {
@@ -63,8 +63,20 @@ export class MapBuilderCanvas {
     }
 
     setBackdropImage(image) {
+        if (this.imageRect) {
+            this.canvasFramework.removeRect(this.imageRect);
+        }
+        if (this.scalingRect) {
+            this.canvasFramework.removeRect(this.scalingRect);
+        }
         this.image = image;
         const ratioXToY = this.image.width / this.image.height;
+        this.imageRect = {
+            drawType: 'image',
+            x: 0,
+            y: 0,
+            image: this.image
+        };
         this.scalingRect = {
             drawType: 'stroke',
             x: this.image.naturalWidth - this.scalingRectSize / 2,
@@ -92,12 +104,7 @@ export class MapBuilderCanvas {
                 this.canvasRef.current.style.cursor = 'auto';
             }
         };
-        this.canvasFramework.addRect({
-            drawType: 'image',
-            x: 0,
-            y: 0,
-            image: this.image
-        });
+        this.canvasFramework.addRect(this.imageRect);
         this.canvasFramework.addRect(this.scalingRect);
         if (this.onImageSizeChange) this.onImageSizeChange({ w: this.image.width, h: this.image.height });
     }

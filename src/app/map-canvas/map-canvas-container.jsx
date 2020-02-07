@@ -1,16 +1,10 @@
-import { createElement, Fragment, useEffect, useRef } from 'react';
+import { createElement, Fragment, useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { MapCanvas } from './map-canvas';
 
-function loadImage(piece) {
-    if (!piece.imageUrl) return;
-    piece.image = new Image();
-    piece.image.onload = () => piece.loaded = true;
-    piece.image.src = piece.imageUrl;
-}
-
 export const MapCanvasContainer = (props) => {
 
+    const [roomName, setRoomName] = useState('');
     const canvasRef = useRef({});
     useEffect(() => {
         let mapCanvas = null;
@@ -21,16 +15,20 @@ export const MapCanvasContainer = (props) => {
             ws.close();
         };
         ws.onopen = function(event) {
-            ws.send('getPieces')
+            ws.send('getRoomData')
         };
 
         ws.onmessage = function(event) {
             const payload = JSON.parse(event.data);
             switch(payload.type) {
-            case 'getPieces':
-                const pieces = payload.data;
-                pieces.forEach(loadImage);
+            case 'getRoomData':
+                const pieces = payload.pieces
+                const grid = payload.grid;
+                const backdrop = payload.backdrop;
+                setRoomName(payload.roomName);
                 mapCanvas = new MapCanvas(canvasRef);
+                mapCanvas.setBackdrop(backdrop);
+                mapCanvas.setGrid(grid);
                 mapCanvas.addPieces(pieces);
                 mapCanvas.init();
                 break;
@@ -42,9 +40,11 @@ export const MapCanvasContainer = (props) => {
 
     return (
         <Fragment>
-            <Link to="/">Leave Room</Link>
-            <br></br>
-            <canvas style={{border: '1px solid red'}} ref={canvasRef} id="map-canvas">
+            <div className="left-bar">
+                <h1>{roomName}</h1>
+                <Link to="/">&lt;&lt; Back</Link>
+            </div>
+            <canvas style={{height: '100%', width: '100%', border: 'solid 2px #55b'}} ref={canvasRef} id="map-canvas">
                 Your browser does not support HTML5 Canvas!
             </canvas>
         </Fragment>
