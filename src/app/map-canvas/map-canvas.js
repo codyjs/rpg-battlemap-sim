@@ -43,6 +43,14 @@ export class MapCanvas {
                 this.ghost.y = gridY * this.grid.tileSize + this.grid.y - gridOffsetY * this.grid.tileSize;
             };
 
+            canvasPiece.handleHover = () => {
+                this.canvasRef.current.style.cursor = 'grab';
+            }
+
+            canvasPiece.handleHoverEnd = () => {
+                this.canvasRef.current.style.cursor = 'auto';
+            }
+
             canvasPiece.handleDragEnd = () => {
                 if (this.ghost) {
                     canvasPiece.x = this.ghost.x;
@@ -98,8 +106,8 @@ export class MapCanvas {
     // Utility functions
 
     getGridCoordsFromCanvasCoords(canvasX, canvasY) {
-        return [Math.floor(canvasX / this.grid.tileSize),
-                Math.floor(canvasY / this.grid.tileSize)];
+        return [Math.floor((canvasX - this.grid.x) / this.grid.tileSize),
+                Math.floor((canvasY - this.grid.y) / this.grid.tileSize)];
     }
 
     getClickCoords(e) {
