@@ -8,7 +8,8 @@ export class MapBuilderCanvas {
             y: 0,
             h: 0,
             w: 0,
-            drawType: 'grid'
+            drawType: 'grid',
+            renderPriority: 1
         };
         this.gridOriginMarker = {
             x: 0,
@@ -27,8 +28,9 @@ export class MapBuilderCanvas {
             },
             handleHoverEnd: () => {
                 this.canvasRef.current.style.cursor = 'auto';
-            }
-        }
+            },
+            renderPriority: 2
+        };
     }
 
     init() {
@@ -75,7 +77,8 @@ export class MapBuilderCanvas {
             drawType: 'image',
             x: 0,
             y: 0,
-            image: this.image
+            image: this.image,
+            renderPriority: 0
         };
         this.scalingRect = {
             drawType: 'stroke',
