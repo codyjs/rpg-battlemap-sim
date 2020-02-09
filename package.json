@@ -18,6 +18,10 @@
   },
   "homepage": "https://github.com/codyjs/rpg-battlemap-sim#readme",
   "devDependencies": {
+    "@types/react": "^16.9.19",
+    "@types/react-router-dom": "^5.1.3",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.5",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.10.1"

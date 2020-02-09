@@ -14,7 +14,7 @@ export const CreateRoom = () => {
     const [imageSize, setImageSize] = useState({ h: 0, w: 0 });
     const [backdrops, setBackdrops] = useState([]);
 
-    const setCanvasBackdropImage = (imgName) => {
+    const setCanvasBackdropImage = (imgName: string) => {
         if (imgName) {
             const img = new Image();
             img.src = '/images/backdrops/' + imgName;
@@ -25,12 +25,12 @@ export const CreateRoom = () => {
         setBackdropImage(imgName);
     };
 
-    const setCanvasGridSize = (gridSize) => {
+    const setCanvasGridSize = (gridSize: { h: number, w: number }) => {
         mapBuilderRef.current.setGridSize(gridSize);
         setGridSize(gridSize);
     };
 
-    const setCanvasTileSize = (tileSize) => {
+    const setCanvasTileSize = (tileSize: number) => {
         mapBuilderRef.current.setTileSize(tileSize);
         setTileSize(tileSize);
     };
@@ -87,11 +87,11 @@ export const CreateRoom = () => {
                     { backdrops.map(backdrop => <option key={backdrop} value={backdrop}>{backdrop}</option>) }
                 </select>
                 <label htmlFor="tile-size">Tile Size:</label>
-                <input type="number" onChange={(e) => setCanvasTileSize(e.target.value)} value={tileSize} />
+                <input type="number" onChange={(e) => setCanvasTileSize(parseInt(e.target.value))} value={tileSize} />
                 <label htmlFor="grid-height">Grid Height:</label>
-                <input id="grid-height" type="number" min="1" onChange={(e) => setCanvasGridSize({ h: e.target.value, w: gridSize.w })} value={gridSize.h} />
+                <input id="grid-height" type="number" min="1" onChange={(e) => setCanvasGridSize({ h: parseInt(e.target.value), w: gridSize.w })} value={gridSize.h} />
                 <label htmlFor="grid-width">Grid Width:</label>
-                <input id="grid-width" type="number" min="1" onChange={(e) => setCanvasGridSize({ h: gridSize.h, w: e.target.value })} value={gridSize.w} />
+                <input id="grid-width" type="number" min="1" onChange={(e) => setCanvasGridSize({ h: gridSize.h, w: parseInt(e.target.value) })} value={gridSize.w} />
                 <label>Image Resolution:</label>
                 <p>{imageSize.w} x {imageSize.h}</p>
                 <label>Grid Origin:</label>

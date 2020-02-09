@@ -1,20 +1,21 @@
-import { createElement, Fragment, useEffect, useState, useRef } from 'react';
+import { createElement, Fragment, useEffect, useState, useRef, MutableRefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { MapCanvas } from './map-canvas';
+import { Grid } from '../canvas-framework/types';
 
-export const MapCanvasContainer = (props) => {
+export const MapCanvasContainer = (props: any) => {
 
     const [roomName, setRoomName] = useState('');
-    const canvasRef = useRef({});
+    const canvasRef: MutableRefObject<HTMLCanvasElement> = useRef(null);
     useEffect(() => {
-        let mapCanvas = null;
+        let mapCanvas: MapCanvas = null;
         let ws = new WebSocket(`ws://localhost:3000/api/rooms/${props.room.id}`);
         let cleanup = () => {
             mapCanvas && mapCanvas.dispose();
             ws.send('leave');
             ws.close();
         };
-        ws.onopen = function(event) {
+        ws.onopen = function() {
             ws.send('getRoomData')
         };
 
@@ -28,7 +29,7 @@ export const MapCanvasContainer = (props) => {
                 setRoomName(payload.roomName);
                 mapCanvas = new MapCanvas(canvasRef);
                 mapCanvas.setBackdrop(backdrop);
-                mapCanvas.setGrid(grid);
+                mapCanvas.setGrid(new Grid(grid, grid.tileSize));
                 mapCanvas.addPieces(pieces);
                 mapCanvas.init();
                 break;

@@ -4,6 +4,7 @@ const path = require('path');
 module.exports = {
     context: __dirname,
     entry: './src/app/index.jsx',
+    devtool: 'inline-source-map',
     devServer: {
         contentBase: ['./src/server/public'],
         proxy: {
@@ -11,7 +12,7 @@ module.exports = {
         }
     },
     resolve: {
-        extensions: ['.jsx', '.js']
+        extensions: ['.jsx', '.js', '.ts', '.tsx']
     },
     mode: 'development',
     output: {
@@ -37,6 +38,10 @@ module.exports = {
                         presets: [['@babel/preset-react', { pragma: 'createElement' }]],
                     }
                 }
+            }, {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
             }
         ]
     }

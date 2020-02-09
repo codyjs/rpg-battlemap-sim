@@ -1,32 +1,48 @@
-export class CanvasFramework {
-    constructor(canvasRef) {
-        this.canvasRef = canvasRef;
-        this.rects = [];
-    }
+import { Rect, Point, Grid, DrawType } from './types';
+import { MutableRefObject } from 'react';
 
-    init() {
-        this.canvasHeight = this.canvasRef.current.scrollHeight;
-        this.canvasWidth = this.canvasRef.current.scrollWidth;
+export class CanvasFramework {
+    private rects: Rect[] = [];
+    private drawInterval: NodeJS.Timeout = null;
+    private scale = 1;
+    private viewportOffset: Point = { x: 0, y: 0 };
+    private selectedRect: Rect = null;
+    private selectedRectOffset: Point = null;
+    private panStart: Point = null;
+    private hoverRect: Rect = null;
+
+    constructor(private canvasRef: MutableRefObject<HTMLCanvasElement>) {}
+
+    public init(): void {
         this.drawInterval = setInterval(() => this.draw(), 10);
         this.canvasRef.current.onmousedown = e => this.handleMouseDown(e);
         this.canvasRef.current.onmousemove = e => this.handleMouseMove(e);
         this.canvasRef.current.onmouseup = e => this.handleMouseUp(e);
         this.canvasRef.current.onmouseleave = e => this.handleMouseUp(e);
         this.canvasRef.current.onwheel = e => this.handleZoom(e);
-        this.scale = 1;
-        this.viewportOffset = { x: 0, y: 0 };
     }
 
-    getContext() {
-        return this.canvasRef.current.getContext('2d');
-    }
-
-    addRect(rect) {
+    public addRect(rect: Rect): void {
         this.rects.push(rect);
         this.sortRects();
     }
+    
+    public removeRect(rect: Rect): void {
+        const rectIndex = this.rects.indexOf(rect);
+        if (rectIndex === -1) return;
+        this.rects.splice(rectIndex, 1);
+    }
 
-    sortRects() {
+        
+    public dispose(): void {
+        clearInterval(this.drawInterval);
+    }
+
+    private getContext(): CanvasRenderingContext2D {
+        return this.canvasRef.current.getContext('2d');
+    }
+
+    private sortRects(): void {
         this.rects.sort((a, b) => {
             if (a.renderPriority && !b.renderPriority) return 1;
             if (!a.renderPriority && b.renderPriority) return -1;
@@ -35,27 +51,21 @@ export class CanvasFramework {
         });
     }
 
-    removeRect(rect) {
-        const rectIndex = this.rects.indexOf(rect);
-        if (rectIndex === -1) return;
-        this.rects.splice(rectIndex, 1);
-    }
-
-    applyScale(value) {
+    private applyScale(value: number): number {
         return value * this.scale;
     }
 
-    unscale(value) {
+    private unscale(value: number): number {
         return value / this.scale;
     }
 
-    draw() {
+    private draw(): void {
         const ctx = this.getContext();
-        ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        ctx.clearRect(0, 0, this.canvasRef.current.scrollWidth, this.canvasRef.current.scrollHeight);
         this.rects.forEach(rect => this.drawRect(rect));
     }
 
-    drawGrid(grid) {
+    private drawGrid(grid: Grid): void {
         const ctx = this.getContext();
         ctx.strokeStyle = '#000000';
         for (let x = this.applyScale(grid.x) + this.viewportOffset.x; x <= this.applyScale(grid.x + grid.w * grid.tileSize) + this.viewportOffset.x; x += this.applyScale(grid.tileSize)) {
@@ -72,24 +82,24 @@ export class CanvasFramework {
         }
     }
 
-    drawGhost(ghost) {
+    private drawGhost(ghost: Rect): void {
         const ctx = this.canvasRef.current.getContext('2d');
         ctx.globalAlpha = 0.5;
         if (ghost.image) ctx.drawImage(ghost.image, this.applyScale(ghost.x) + this.viewportOffset.x, this.applyScale(ghost.y) + this.viewportOffset.y, this.applyScale(ghost.image.width), this.applyScale(ghost.image.height));
         ctx.globalAlpha = 1;
         ctx.strokeStyle = '#ff0000';
         ctx.beginPath();
-        const [beginX, beginY] = this.getCenter(this.selectedRect)
-        const [endX, endY] = this.getCenter({ x: ghost.x, y: ghost.y, w: ghost.image.width, h: ghost.image.height })
+        const [beginX, beginY] = this.getCenter(this.selectedRect);
+        const [endX, endY] = this.getCenter({ x: ghost.x, y: ghost.y, w: ghost.image.width, h: ghost.image.height, drawType: DrawType.Image });
         ctx.moveTo(this.applyScale(beginX) + this.viewportOffset.x, this.applyScale(beginY) + this.viewportOffset.y);
         ctx.lineTo(this.applyScale(endX) + this.viewportOffset.x, this.applyScale(endY) + this.viewportOffset.y);
         ctx.stroke();
     }
 
-    drawRect(rect) {
+    private drawRect(rect: Rect): void {
         const ctx = this.getContext();
         switch (rect.drawType) {
-        case 'fill':
+        case DrawType.Fill:
             ctx.fillStyle = rect.color;
             if (rect.alpha) ctx.globalAlpha = rect.alpha;
             ctx.fillRect(this.applyScale(rect.x) + this.viewportOffset.x, this.applyScale(rect.y) + this.viewportOffset.y, this.applyScale(rect.w), this.applyScale(rect.h));
@@ -106,12 +116,12 @@ export class CanvasFramework {
             this.drawGhost(rect);
             break;
         case 'grid':
-            this.drawGrid(rect);
+            this.drawGrid(rect as Grid);
             break;
         }
     }
 
-    handleMouseDown(e) {
+    private handleMouseDown(e: MouseEvent): void {
         const [mouseX, mouseY] = this.getUnscaledMouseCoords(e);
         this.selectedRect = this.findRectAt(mouseX, mouseY);
         if (this.selectedRect) {
@@ -124,9 +134,8 @@ export class CanvasFramework {
                 this.selectedRect.handleMouseDown({
                     mouseX,
                     mouseY,
-                    rectX: mouseX - this.applyScale(this.selectedRect.x),
-                    rectY: mouseY - this.applyScale(this.selectedRect.y),
-                    scale: this.scale
+                    xOffset: this.selectedRectOffset.x,
+                    yOffset: this.selectedRectOffset.y
                 });
             }
         } else {
@@ -135,7 +144,7 @@ export class CanvasFramework {
         }
     }
 
-    handleMouseMove(e) {
+    private handleMouseMove(e: MouseEvent): void {
         const [mouseX, mouseY] = this.getUnscaledMouseCoords(e);
         if (this.selectedRect && this.selectedRect.handleDrag) {
             this.selectedRect.handleDrag({
@@ -172,7 +181,7 @@ export class CanvasFramework {
         }
     }
 
-    handleMouseUp(e) {
+    private handleMouseUp(e: MouseEvent): void {
         const [mouseX, mouseY] = this.getUnscaledMouseCoords(e);
         if (this.selectedRect && this.selectedRect.handleDragEnd) {
             this.canvasRef.current.style.cursor = 'grab';
@@ -188,7 +197,7 @@ export class CanvasFramework {
         this.selectedRectOffset = null;
     }
 
-    handleZoom(e) {
+    private handleZoom(e: WheelEvent): void {
         e.preventDefault();
         const newScale = this.scale + e.deltaY * -0.05;
         if (newScale <= 0.25 || newScale >= 4) return;
@@ -201,7 +210,7 @@ export class CanvasFramework {
         this.viewportOffset.y -= scaleOffsetY;
     }
 
-    getUnscaledMouseCoords(e) {
+    private getUnscaledMouseCoords(e: MouseEvent): [number, number] {
         const canvasX = e.pageX - this.canvasRef.current.offsetLeft;
         const canvasY = e.pageY - this.canvasRef.current.offsetTop;
         const x = this.unscale(canvasX - this.viewportOffset.x);
@@ -209,12 +218,12 @@ export class CanvasFramework {
         return [x, y];
     }
 
-    getRawMouseCoords(e) {
+    private getRawMouseCoords(e: MouseEvent): [number, number] {
         return [e.pageX - this.canvasRef.current.offsetLeft,
                 e.pageY - this.canvasRef.current.offsetTop];
     }
 
-    findRectAt(x, y) {
+    private findRectAt(x: number, y: number): Rect | null {
         let rect = null;
         for (let i = 0; i < this.rects.length; i++) {
             rect = this.rects[i];
@@ -229,11 +238,7 @@ export class CanvasFramework {
         return null;
     }
 
-    getCenter(rect) {
+    private getCenter(rect: Rect): [number, number] {
         return [rect.x + rect.w / 2, rect.y + rect.h / 2];
-    }
-
-    dispose() {
-        clearInterval(this.drawInterval);
     }
 }
