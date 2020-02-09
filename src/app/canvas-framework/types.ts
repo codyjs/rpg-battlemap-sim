@@ -53,8 +53,17 @@ export class Grid implements Rect {
         this.tileSize = tileSize;
     }
 
-    public getGridCoordsFromCanvasCoords(canvasX: number, canvasY: number): [number, number] {
-        return [Math.floor((canvasX - this.x) / this.tileSize),
-                Math.floor((canvasY - this.y) / this.tileSize)];
+    public getGridCoordsFromCanvasCoords(canvasX: number, canvasY: number): Point {
+        return {
+            x: Math.floor((canvasX - this.x) / this.tileSize),
+            y: Math.floor((canvasY - this.y) / this.tileSize)
+        };
+    }
+
+    public getCanvasCoordsFromGridCoords(gridX: number, gridY: number): Point {
+        return {
+            x: (gridX * this.tileSize) + this.x,
+            y: (gridY * this.tileSize) + this.y
+        };
     }
 }

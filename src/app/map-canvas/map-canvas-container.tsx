@@ -1,7 +1,9 @@
 import { createElement, Fragment, useEffect, useState, useRef, MutableRefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { MapCanvas } from './map-canvas';
-import { Grid } from '../canvas-framework/types';
+import { Grid, Point } from '../canvas-framework/types';
+import { BattlemapWebsocketClient } from './battlemap-websocket-client';
+import { RoomData } from './types';
 
 export const MapCanvasContainer = (props: any) => {
 
@@ -9,34 +11,23 @@ export const MapCanvasContainer = (props: any) => {
     const canvasRef: MutableRefObject<HTMLCanvasElement> = useRef(null);
     useEffect(() => {
         let mapCanvas: MapCanvas = null;
-        let ws = new WebSocket(`ws://localhost:3000/api/rooms/${props.room.id}`);
-        let cleanup = () => {
+        const wsClient = new BattlemapWebsocketClient(props.room.id);
+
+        wsClient.onRoomData((roomData: RoomData) => {
+            setRoomName(roomData.roomName);
+            mapCanvas = new MapCanvas(canvasRef, wsClient);
+            mapCanvas.setBackdrop(roomData.backdrop);
+            mapCanvas.setGrid(new Grid(roomData.grid, roomData.grid.tileSize));
+            mapCanvas.addPieces(roomData.pieces);
+            mapCanvas.init();
+        });
+
+        wsClient.onPieceMoved((pieceId: number, to: Point) => mapCanvas.movePiece(pieceId, to));
+
+        return () => {
             mapCanvas && mapCanvas.dispose();
-            ws.send('leave');
-            ws.close();
+            wsClient.close();
         };
-        ws.onopen = function() {
-            ws.send('getRoomData')
-        };
-
-        ws.onmessage = function(event) {
-            const payload = JSON.parse(event.data);
-            switch(payload.type) {
-            case 'getRoomData':
-                const pieces = payload.pieces
-                const grid = payload.grid;
-                const backdrop = payload.backdrop;
-                setRoomName(payload.roomName);
-                mapCanvas = new MapCanvas(canvasRef);
-                mapCanvas.setBackdrop(backdrop);
-                mapCanvas.setGrid(new Grid(grid, grid.tileSize));
-                mapCanvas.addPieces(pieces);
-                mapCanvas.init();
-                break;
-            }
-        };
-
-        return cleanup;
     }, []);
 
     return (

@@ -1,16 +1,18 @@
 import { MutableRefObject } from 'react';
 import { CanvasFramework } from '../canvas-framework/canvas-framework';
-import { Rect, Grid, DrawType } from '../canvas-framework/types';
+import { Rect, Grid, DrawType, Point } from '../canvas-framework/types';
 import { CanvasPiece } from './canvas-piece';
 import { MapPiece, BackdropData } from './types';
 import { CanvasBackdrop } from './canvas-backdrop';
+import { BattlemapWebsocketClient } from './battlemap-websocket-client';
 
 export class MapCanvas {
     private canvasFramework: CanvasFramework = null;
     private grid: Grid = null;
     private backdrop: Rect = null;
+    private pieces: CanvasPiece[] = [];
 
-    constructor(private canvasRef: MutableRefObject<HTMLCanvasElement>) {
+    constructor(private canvasRef: MutableRefObject<HTMLCanvasElement>, private wsClient: BattlemapWebsocketClient) {
         this.canvasFramework = new CanvasFramework(canvasRef);
     }
 
@@ -21,8 +23,11 @@ export class MapCanvas {
     }
 
     public addPieces(pieces: MapPiece[]) {
-        pieces.forEach(piece => {
-            this.canvasFramework.addRect(new CanvasPiece(this.canvasFramework, this.canvasRef, this.grid, piece));
+        pieces.forEach((piece, idx) => {
+            const canvasPiece = new CanvasPiece(this.canvasFramework, this.canvasRef, this.grid, piece, idx);
+            canvasPiece.onMove((pieceId: number, to: Point) => this.wsClient.movePiece(pieceId, to));
+            this.pieces.push(canvasPiece);
+            this.canvasFramework.addRect(canvasPiece);
         });
     }
 
@@ -42,6 +47,10 @@ export class MapCanvas {
         this.grid.drawType = DrawType.Grid;
         this.grid.renderPriority = 1;
         this.canvasFramework.addRect(this.grid);
+    }
+
+    public movePiece(pieceId: number, dest: Point) {
+        this.pieces[pieceId].moveTo(dest);
     }
 
     public dispose(): void {

@@ -42,14 +42,15 @@ router.ws('/:id', function(ws, req) {
     const room = getRoomById(parseInt(req.params.id));
     room.connections.push(ws);
   
-    ws.on('message', function(msg) {
-      switch(msg) {
+    ws.on('message', function(msgData) {
+      const msg = JSON.parse(msgData);
+      switch(msg.messageType) {
         case 'leave':
           room.connections.splice(room.connections.indexOf(ws));
           break;
         case 'getRoomData':
           const payload = {
-            type: 'getRoomData',
+            messageType: 'getRoomData',
             grid: room.grid,
             pieces: room.pieces,
             backdrop: room.backdrop,
@@ -57,8 +58,17 @@ router.ws('/:id', function(ws, req) {
           }
           ws.send(JSON.stringify(payload));
           break;
+        case 'movePiece':
+          const piece = room.pieces[msg.data.pieceId];
+          piece.x = msg.data.to.x;
+          piece.y = msg.data.to.y;
+          room.connections.forEach(conn => {
+            conn.send(msgData);
+          });
+          break;
+        default:
+          console.log(msg);
       }
-      console.log('got message: ', msg);
     });
   } catch (e) {
     console.error(e);
