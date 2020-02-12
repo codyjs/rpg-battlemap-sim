@@ -1,223 +1,44 @@
-import { Rect, Point, Grid, DrawType } from './types';
+import { CanvasInputController } from './canvas-input-controller';
+import { CanvasRenderEngine } from './canvas-render-engine';
 import { MutableRefObject } from 'react';
-
-interface TouchData {
-    identifier: number;
-    pageX: number;
-    pageY: number;
-}
-
-function copyTouch({ identifier, pageX, pageY }: Touch): TouchData {
-    return { identifier, pageX, pageY };
-}
+import { Rect, Point } from './types';
 
 export class CanvasFramework {
-    private rects: Rect[] = [];
-    private drawInterval: NodeJS.Timeout = null;
-    private scale = 1;
-    private viewportOffset: Point = { x: 0, y: 0 };
+    private inputController: CanvasInputController = null;
+    private renderEngine: CanvasRenderEngine = null;
     private selectedRect: Rect = null;
     private selectedRectOffset: Point = null;
-    private panStart: Point = null;
     private hoverRect: Rect = null;
-    private touches: TouchData[] = [];
+    private panStart: Point = null;
 
-    constructor(private canvasRef: MutableRefObject<HTMLCanvasElement>) {}
+    constructor(private canvasRef: MutableRefObject<HTMLCanvasElement>) {
+        this.renderEngine = new CanvasRenderEngine(canvasRef);
+        this.inputController = new CanvasInputController(canvasRef);
 
-    public init(): void {
-        this.drawInterval = setInterval(() => this.draw(), 10);
-
-        this.canvasRef.current.onmousedown = e => {
-            e.preventDefault();
-            const pageCoords = { x: e.pageX, y: e.pageY };
-            this.handleSelectStart(pageCoords) || this.handlePanStart(pageCoords);
-        };
-
-        this.canvasRef.current.onmousemove = e => {
-            e.preventDefault();
-            const pageCoords = { x: e.pageX, y: e.pageY };
-            this.handleSelectMove(pageCoords) || this.handlePanMove(pageCoords) || this.handleHover(pageCoords);
-        };
-
-        this.canvasRef.current.onmouseup = e => {
-            e.preventDefault();
-            const pageCoords = { x: e.pageX, y: e.pageY };
-            this.handleSelectEnd(pageCoords);
-            this.handlePanEnd();
-        };
-
-        this.canvasRef.current.onmouseleave = e => {
-            e.preventDefault();
-            const pageCoords = { x: e.pageX, y: e.pageY };
-            this.handleSelectEnd(pageCoords);
-            this.handlePanEnd();
-        };
-
-        this.canvasRef.current.onwheel = e => {
-            e.preventDefault();
-            this.handleZoom({ x: e.pageX, y: e.pageY }, e.deltaY);
-        };
-
-        this.canvasRef.current.ontouchstart = (e) => {
-            e.preventDefault();
-            const evtTouches = e.changedTouches;
-            for (let i = 0; i < evtTouches.length; i++) {
-                this.touches.push(copyTouch(evtTouches[i]));
-            }
-
-            if (this.touches.length === 1) {
-                const touch = this.touches[0];
-                const pageCoords = { x: touch.pageX, y: touch.pageY };
-                this.handleSelectStart(pageCoords) || this.handlePanStart(pageCoords);
-            } else if (this.touches.length > 1) {
-                // handlePanStart?
-            }
-        };
-
-        this.canvasRef.current.ontouchmove = (e) => {
-            e.preventDefault();
-            const evtTouches = e.changedTouches;
-
-            if (this.touches.length === 1) {
-                const touch = evtTouches[0];
-                const pageCoords = { x: touch.pageX, y: touch.pageY };
-                this.handleSelectMove(pageCoords) || this.handlePanMove(pageCoords)
-            } else if (this.touches.length > 1) {
-                const touch1 = evtTouches[0];
-                const touch2 = evtTouches[1] || touch1.identifier === this.touches[0].identifier ? this.touches[1] : this.touches[0];
-                const pageCoords = this.getMidpoint(touch1, touch2);
-                const deltaY = this.getZoomFactor([this.touches[0], this.touches[1]], [touch1, touch2]);
-                this.handleZoom(pageCoords, deltaY);
-            }
-
-            for (let i = 0; i < evtTouches.length; i++) {
-                var idx = this.ongoingTouchIndexById(evtTouches[i].identifier);
-                if (idx >= 0) {
-                    this.touches.splice(idx, 1, copyTouch(evtTouches[i]));
-                } else {
-                    console.log(`touch ${evtTouches[i].identifier} not found`);
-                }
-            }
-        };
-
-        this.canvasRef.current.ontouchend = (e) => {
-            e.preventDefault();
-            const evtTouches = e.changedTouches;
-            
-            if (evtTouches.length === this.touches.length) {
-                const touch = evtTouches[0];
-                this.handleSelectEnd({ x: touch.pageX, y: touch.pageY });
-                this.handlePanEnd();
-            }
-
-            for (let i = 0; i < evtTouches.length; i++) {
-                var idx = this.ongoingTouchIndexById(evtTouches[i].identifier);
-                if (idx >= 0) {
-                    this.touches.splice(idx, 1);
-                } else {
-                    console.log(`touch ${evtTouches[i].identifier} not found`);
-                }
-            }
-        }
+        this.inputController.onSelectStart = (p) => this.handleSelectStart(p);
+        this.inputController.onSelectMove = (p) => this.handleSelectMove(p);
+        this.inputController.onSelectEnd = (p) => this.handleSelectEnd(p);
+        this.inputController.onPanStart = (p) => this.handlePanStart(p);
+        this.inputController.onPanMove = (p) => this.handlePanMove(p);
+        this.inputController.onPanEnd = () => this.handlePanEnd();
+        this.inputController.onHover = (p) => this.handleHover(p);
+        this.inputController.onZoom = (p, y) => this.handleZoom(p, y);
     }
 
-    public addRect(rect: Rect): void {
-        this.rects.push(rect);
-        this.sortRects();
-    }
-    
-    public removeRect(rect: Rect): void {
-        const rectIndex = this.rects.indexOf(rect);
-        if (rectIndex === -1) return;
-        this.rects.splice(rectIndex, 1);
+    public init() {
+        this.renderEngine.init();
     }
 
-        
-    public dispose(): void {
-        clearInterval(this.drawInterval);
+    public addRect(rect: Rect) {
+        this.renderEngine.addRect(rect);
     }
 
-    private getContext(): CanvasRenderingContext2D {
-        return this.canvasRef.current.getContext('2d');
+    public removeRect(rect: Rect) {
+        this.renderEngine.removeRect(rect);
     }
 
-    private sortRects(): void {
-        this.rects.sort((a, b) => {
-            if (a.renderPriority && !b.renderPriority) return 1;
-            if (!a.renderPriority && b.renderPriority) return -1;
-            if (!a.renderPriority && !b.renderPriority) return 0;
-            return a.renderPriority - b.renderPriority;
-        });
-    }
-
-    private applyScale(value: number): number {
-        return value * this.scale;
-    }
-
-    private unscale(value: number): number {
-        return value / this.scale;
-    }
-
-    private draw(): void {
-        const ctx = this.getContext();
-        ctx.clearRect(0, 0, this.canvasRef.current.scrollWidth, this.canvasRef.current.scrollHeight);
-        this.rects.forEach(rect => this.drawRect(rect));
-    }
-
-    private drawGrid(grid: Grid): void {
-        const ctx = this.getContext();
-        ctx.strokeStyle = '#000000';
-        for (let x = this.applyScale(grid.x) + this.viewportOffset.x; x <= this.applyScale(grid.x + grid.w * grid.tileSize) + this.viewportOffset.x; x += this.applyScale(grid.tileSize)) {
-            ctx.beginPath();
-            ctx.moveTo(x, this.applyScale(grid.y) + this.viewportOffset.y);
-            ctx.lineTo(x, this.applyScale(grid.y) + this.applyScale(grid.h * grid.tileSize) + this.viewportOffset.y);
-            ctx.stroke();
-        }
-        for (let y = this.applyScale(grid.y) + this.viewportOffset.y; y <= this.applyScale(grid.y + grid.h * grid.tileSize) + this.viewportOffset.y; y += this.applyScale(grid.tileSize)) {
-            ctx.beginPath();
-            ctx.moveTo(this.applyScale(grid.x) + this.viewportOffset.x, y);
-            ctx.lineTo(this.applyScale(grid.x) + this.applyScale(grid.w * grid.tileSize) + this.viewportOffset.x, y);
-            ctx.stroke();
-        }
-    }
-
-    private drawGhost(ghost: Rect): void {
-        const ctx = this.canvasRef.current.getContext('2d');
-        ctx.globalAlpha = 0.5;
-        if (ghost.image) ctx.drawImage(ghost.image, this.applyScale(ghost.x) + this.viewportOffset.x, this.applyScale(ghost.y) + this.viewportOffset.y, this.applyScale(ghost.image.width), this.applyScale(ghost.image.height));
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = '#ff0000';
-        ctx.beginPath();
-        const beginCoords = this.getCenter(this.selectedRect);
-        const endCoords = this.getCenter({ x: ghost.x, y: ghost.y, w: ghost.image.width, h: ghost.image.height, drawType: DrawType.Image });
-        ctx.moveTo(this.applyScale(beginCoords.x) + this.viewportOffset.x, this.applyScale(beginCoords.y) + this.viewportOffset.y);
-        ctx.lineTo(this.applyScale(endCoords.x) + this.viewportOffset.x, this.applyScale(endCoords.y) + this.viewportOffset.y);
-        ctx.stroke();
-    }
-
-    private drawRect(rect: Rect): void {
-        const ctx = this.getContext();
-        switch (rect.drawType) {
-        case DrawType.Fill:
-            ctx.fillStyle = rect.color;
-            if (rect.alpha) ctx.globalAlpha = rect.alpha;
-            ctx.fillRect(this.applyScale(rect.x) + this.viewportOffset.x, this.applyScale(rect.y) + this.viewportOffset.y, this.applyScale(rect.w), this.applyScale(rect.h));
-            if (rect.alpha) ctx.globalAlpha = 1;
-            break;
-        case 'stroke':
-            ctx.strokeStyle = rect.color;
-            ctx.strokeRect(this.applyScale(rect.x) + this.viewportOffset.x, this.applyScale(rect.y) + this.viewportOffset.y, this.applyScale(rect.w), this.applyScale(rect.h));
-            break;
-        case 'image':
-            if (rect.image) ctx.drawImage(rect.image, this.applyScale(rect.x) + this.viewportOffset.x, this.applyScale(rect.y) + this.viewportOffset.y, this.applyScale(rect.image.width), this.applyScale(rect.image.height));
-            break;
-        case 'ghost':
-            this.drawGhost(rect);
-            break;
-        case 'grid':
-            this.drawGrid(rect as Grid);
-            break;
-        }
+    public dispose() {
+        this.renderEngine.dispose();
     }
 
     private handleSelectStart(pageCoords: Point): boolean {
@@ -263,8 +84,8 @@ export class CanvasFramework {
     private handlePanMove(pageCoords: Point): boolean {
         if (this.panStart) {
             const rawMouseCoords = this.getRawMouseCoords(pageCoords);
-            this.viewportOffset.x -= this.panStart.x - rawMouseCoords.x;
-            this.viewportOffset.y -= this.panStart.y - rawMouseCoords.y;
+            this.renderEngine.viewportOffset.x -= this.panStart.x - rawMouseCoords.x;
+            this.renderEngine.viewportOffset.y -= this.panStart.y - rawMouseCoords.y;
             this.panStart.x = rawMouseCoords.x;
             this.panStart.y = rawMouseCoords.y;
             return true;
@@ -314,23 +135,28 @@ export class CanvasFramework {
     }
 
     private handleZoom(pageCoords: Point, deltaY: number): void {
-        const newScale = this.scale + deltaY * -0.05;
+        const newScale = this.renderEngine.scale + deltaY * -0.05;
         if (newScale <= 0.25 || newScale >= 4) return;
         const preScaleMouseCoords = this.getUnscaledMouseCoords(pageCoords);
-        this.scale = newScale;
+        this.renderEngine.scale = newScale;
         const postScaleMouseCoords = this.getUnscaledMouseCoords(pageCoords);
         const scaleOffsetX = (preScaleMouseCoords.x - postScaleMouseCoords.x) * newScale;
         const scaleOffsetY = (preScaleMouseCoords.y - postScaleMouseCoords.y) * newScale;
-        this.viewportOffset.x -= scaleOffsetX;
-        this.viewportOffset.y -= scaleOffsetY;
+        this.renderEngine.viewportOffset.x -= scaleOffsetX;
+        this.renderEngine.viewportOffset.y -= scaleOffsetY;
     }
 
     private getUnscaledMouseCoords(pageCoords: Point): Point {
         const canvasX = pageCoords.x - this.canvasRef.current.offsetLeft;
         const canvasY = pageCoords.y - this.canvasRef.current.offsetTop;
-        const x = this.unscale(canvasX - this.viewportOffset.x);
-        const y = this.unscale(canvasY - this.viewportOffset.y);
+        const x = this.unscale(canvasX - this.renderEngine.viewportOffset.x);
+        const y = this.unscale(canvasY - this.renderEngine.viewportOffset.y);
         return {x, y};
+    }
+
+    
+    private unscale(value: number): number {
+        return value / this.renderEngine.scale;
     }
 
     private getRawMouseCoords(pageCoords: Point): Point {
@@ -341,8 +167,8 @@ export class CanvasFramework {
 
     private findRectAt(point: Point): Rect | null {
         let rect = null;
-        for (let i = 0; i < this.rects.length; i++) {
-            rect = this.rects[i];
+        for (let i = 0; i < this.renderEngine.rects.length; i++) {
+            rect = this.renderEngine.rects[i];
             if (rect.drawType !== 'grid' &&
                 point.x >= rect.x &&
                 point.x <= rect.x + rect.w &&
@@ -352,48 +178,5 @@ export class CanvasFramework {
             }
         }
         return null;
-    }
-
-    private getCenter(rect: Rect): Point {
-        return {
-            x: rect.x + rect.w / 2,
-            y: rect.y + rect.h / 2
-        };
-    }
-
-    private ongoingTouchIndexById(idToFind: number) {
-        for (var i = 0; i < this.touches.length; i++) {
-          var id = this.touches[i].identifier;
-          
-          if (id == idToFind) {
-            return i;
-          }
-        }
-        return -1;    // not found
-    }
-
-    private getMidpoint(touch1: TouchData, touch2: TouchData): Point {
-        return {
-            x: (touch1.pageX + touch2.pageX) / 2,
-            y: (touch1.pageY + touch2.pageY) / 2,
-        };
-    }
-
-    private getZoomFactor(originalTouches: TouchData[], newTouches: TouchData[]): number {
-        const [ogTouch1, ogTouch2] = originalTouches;
-        const ogPoint1: Point = { x: ogTouch1.pageX, y: ogTouch1.pageY };
-        const ogPoint2: Point = { x: ogTouch2.pageX, y: ogTouch2.pageY };
-        const ogDist = this.getDistance(ogPoint1, ogPoint2);
-
-        const [newTouch1, newTouch2] = newTouches;
-        const newPoint1: Point = { x: newTouch1.pageX, y: newTouch1.pageY };
-        const newPoint2: Point = { x: newTouch2.pageX, y: newTouch2.pageY };
-        const newDist = this.getDistance(newPoint1, newPoint2);
-
-        return (ogDist - newDist) * 0.25;
-    }
-
-    private getDistance(point1: Point, point2: Point): number {
-        return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
     }
 }

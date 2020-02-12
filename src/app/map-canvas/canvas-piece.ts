@@ -41,7 +41,8 @@ export class CanvasPiece implements Rect {
                 h: this.h * this.grid.tileSize,
                 image: this.image,
                 drawType: DrawType.Ghost,
-                renderPriority: 3
+                renderPriority: 3,
+                originalRect: this
             };
             this.canvasFramework.addRect(this.ghost);
         }
