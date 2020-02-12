@@ -9,24 +9,13 @@ export class CanvasRenderEngine {
     public viewportOffset: Point = { x: 0, y: 0 };
 
     constructor(private canvasRef: MutableRefObject<HTMLCanvasElement>) {}
+    
+    public setRects(rects: Rect[]) {
+        this.rects = rects;
+    }
 
     public init(): void {
         this.drawInterval = setInterval(() => this.draw(), 10);
-    }
-
-    public addRect(rect: Rect): void {
-        this.rects.push(rect);
-        this.sortRects();
-    }
-    
-    public removeRect(rect: Rect): void {
-        const rectIndex = this.rects.indexOf(rect);
-        if (rectIndex === -1) return;
-        this.rects.splice(rectIndex, 1);
-    }
-
-    public moveViewport(amount: Point) {
-
     }
         
     public dispose(): void {
@@ -35,15 +24,6 @@ export class CanvasRenderEngine {
 
     private getContext(): CanvasRenderingContext2D {
         return this.canvasRef.current.getContext('2d');
-    }
-
-    private sortRects(): void {
-        this.rects.sort((a, b) => {
-            if (a.renderPriority && !b.renderPriority) return 1;
-            if (!a.renderPriority && b.renderPriority) return -1;
-            if (!a.renderPriority && !b.renderPriority) return 0;
-            return a.renderPriority - b.renderPriority;
-        });
     }
 
     private applyScale(value: number): number {
@@ -73,14 +53,14 @@ export class CanvasRenderEngine {
         }
     }
 
-    private drawGhost(ghost: Rect): void {
+    private drawGhost(ghost: Rect, originalRect: Rect): void {
         const ctx = this.canvasRef.current.getContext('2d');
         ctx.globalAlpha = 0.5;
         if (ghost.image) ctx.drawImage(ghost.image, this.applyScale(ghost.x) + this.viewportOffset.x, this.applyScale(ghost.y) + this.viewportOffset.y, this.applyScale(ghost.image.width), this.applyScale(ghost.image.height));
         ctx.globalAlpha = 1;
         ctx.strokeStyle = '#ff0000';
         ctx.beginPath();
-        const beginCoords = this.getCenter(ghost.originalRect);
+        const beginCoords = this.getCenter(originalRect);
         const endCoords = this.getCenter({ x: ghost.x, y: ghost.y, w: ghost.image.width, h: ghost.image.height, drawType: DrawType.Image });
         ctx.moveTo(this.applyScale(beginCoords.x) + this.viewportOffset.x, this.applyScale(beginCoords.y) + this.viewportOffset.y);
         ctx.lineTo(this.applyScale(endCoords.x) + this.viewportOffset.x, this.applyScale(endCoords.y) + this.viewportOffset.y);
@@ -103,12 +83,13 @@ export class CanvasRenderEngine {
         case DrawType.Image:
             if (rect.image) ctx.drawImage(rect.image, this.applyScale(rect.x) + this.viewportOffset.x, this.applyScale(rect.y) + this.viewportOffset.y, this.applyScale(rect.image.width), this.applyScale(rect.image.height));
             break;
-        case DrawType.Ghost:
-            this.drawGhost(rect);
-            break;
         case DrawType.Grid:
             this.drawGrid(rect as Grid);
             break;
+        }
+
+        if (rect.ghost) {
+            this.drawGhost(rect.ghost, rect);
         }
     }
 

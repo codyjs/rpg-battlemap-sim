@@ -10,10 +10,13 @@ export class CanvasFramework {
     private selectedRectOffset: Point = null;
     private hoverRect: Rect = null;
     private panStart: Point = null;
+    private rects: Rect[] = [];
 
     constructor(private canvasRef: MutableRefObject<HTMLCanvasElement>) {
         this.renderEngine = new CanvasRenderEngine(canvasRef);
         this.inputController = new CanvasInputController(canvasRef);
+
+        this.renderEngine.setRects(this.rects);
 
         this.inputController.onSelectStart = (p) => this.handleSelectStart(p);
         this.inputController.onSelectMove = (p) => this.handleSelectMove(p);
@@ -29,12 +32,15 @@ export class CanvasFramework {
         this.renderEngine.init();
     }
 
-    public addRect(rect: Rect) {
-        this.renderEngine.addRect(rect);
+    public addRect(rect: Rect): void {
+        this.rects.push(rect);
+        this.sortRects();
     }
-
-    public removeRect(rect: Rect) {
-        this.renderEngine.removeRect(rect);
+    
+    public removeRect(rect: Rect): void {
+        const rectIndex = this.rects.indexOf(rect);
+        if (rectIndex === -1) return;
+        this.rects.splice(rectIndex, 1);
     }
 
     public dispose() {
@@ -153,7 +159,6 @@ export class CanvasFramework {
         const y = this.unscale(canvasY - this.renderEngine.viewportOffset.y);
         return {x, y};
     }
-
     
     private unscale(value: number): number {
         return value / this.renderEngine.scale;
@@ -163,6 +168,15 @@ export class CanvasFramework {
         const x = pageCoords.x - this.canvasRef.current.offsetLeft;
         const y = pageCoords.y - this.canvasRef.current.offsetTop;
         return {x, y};
+    }
+
+    private sortRects(): void {
+        this.rects.sort((a, b) => {
+            if (a.renderPriority && !b.renderPriority) return 1;
+            if (!a.renderPriority && b.renderPriority) return -1;
+            if (!a.renderPriority && !b.renderPriority) return 0;
+            return a.renderPriority - b.renderPriority;
+        });
     }
 
     private findRectAt(point: Point): Rect | null {

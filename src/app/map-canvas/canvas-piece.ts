@@ -11,9 +11,9 @@ export class CanvasPiece implements Rect {
     public renderPriority = 3;
     public drawType = DrawType.Image;
     public image: HTMLImageElement = null;
+    public ghost: Rect = null;
     
     private onMoveCallback: (pieceId: number, to: Point) => void;
-    private ghost: Rect = null;
 
     constructor(private canvasFramework: CanvasFramework, private canvasRef: MutableRefObject<HTMLCanvasElement>,
             private grid: Grid, piece: MapPiece, private id: number) {
@@ -41,10 +41,8 @@ export class CanvasPiece implements Rect {
                 h: this.h * this.grid.tileSize,
                 image: this.image,
                 drawType: DrawType.Ghost,
-                renderPriority: 3,
-                originalRect: this
+                renderPriority: 3
             };
-            this.canvasFramework.addRect(this.ghost);
         }
         this.ghost.x = gridSquare.x * this.grid.tileSize + this.grid.x - gridOffset.x * this.grid.tileSize;
         this.ghost.y = gridSquare.y * this.grid.tileSize + this.grid.y - gridOffset.y * this.grid.tileSize;

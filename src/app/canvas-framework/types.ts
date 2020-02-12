@@ -8,7 +8,7 @@ export interface Rect {
     image?: HTMLImageElement;
     color?: string;
     alpha?: number;
-    originalRect?: Rect;
+    ghost?: Rect;
     handleMouseDown?: (eventData: RectEventData) => void;
     handleDrag?: (eventData: RectEventData) => void;
     handleDragEnd?: (eventData: RectEventData) => void;
