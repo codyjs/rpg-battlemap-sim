@@ -4,6 +4,6 @@
 
 ### Development
 
-* `npm run webpack` starts webpack dev server on localhost:8080
+* `npm run webpack` starts webpack in watch mode
 * `npm run api` starts express server on localhost:3000
 

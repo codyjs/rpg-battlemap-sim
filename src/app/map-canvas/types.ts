@@ -18,6 +18,8 @@ export interface RoomData {
     grid: GridData;
     backdrop: BackdropData;
     roomName: string;
+    id: number;
+    connections?: any[];
 }
 
 export interface GridData extends Rect {
