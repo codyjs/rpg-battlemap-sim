@@ -1,22 +1,21 @@
-import { createElement, Fragment, useState } from 'react';
+import { createElement, Fragment, useState, FC } from 'react';
 import { Link } from 'react-router-dom';
 
-export const UploadImage = () => {
+export const UploadPiece: FC<{}> = () => {
     const [image, setImage] = useState(null);
     const [imageName, setImageName] = useState(null);
-    const [imageType, setImageType] = useState('piece');
 
-    const onImageSelect = e => {
+    const onImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         setImage(e.target.files[0]);
         const filename = e.target.files[0].name;
         setImageName(filename.slice(0, filename.lastIndexOf('.')));
     }
 
-    const uploadImage = () => {
+    const uploadPiece = () => {
         const formData = new FormData();
-        formData.append('data', JSON.stringify({ imageName, imageType }));
+        formData.append('data', JSON.stringify({ imageName }));
         formData.append('image', image);
-        fetch('/api/images', {
+        fetch('/api/pieces', {
             method: 'POST',
             body: formData
         });
@@ -24,7 +23,7 @@ export const UploadImage = () => {
 
     return (
         <div className="left-bar">
-            <h1>Upload Image</h1>
+            <h1>Add Piece</h1>
             <Link to="/">&lt;&lt; Back</Link>
             <label htmlFor="image-upload" className="custom-file-upload" style={{marginTop: '10px'}}>Select Image</label>
             <input id="image-upload" type="file" onChange={onImageSelect}/>
@@ -32,11 +31,7 @@ export const UploadImage = () => {
                 <Fragment>
                     <label htmlFor="name">Name:</label>
                     <input id="name" value={imageName} onChange={(e) => setImageName(e.target.value)} />
-                    <label>Piece</label>
-                    <input type="radio" name="image-type" value="piece" checked={imageType === 'piece'} onChange={(e) => !e.target.checked || setImageType('piece')} />
-                    <label>Backdrop</label>
-                    <input type="radio" name="image-type" value="backdrop" checked={imageType === 'backdrop'} onChange={(e) => !e.target.checked || setImageType('backdrop')}/>
-                    <button onClick={() => uploadImage()}>Save</button>
+                    <button onClick={() => uploadPiece()}>Save</button>
                 </Fragment>
             ) : null}
         </div>
