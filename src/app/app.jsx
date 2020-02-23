@@ -13,10 +13,12 @@ export const App = () => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
-        fetch('/api/rooms')
-            .then(response => response.json())
-            .then(setRooms);
-    }, []);
+        if (user) {
+            fetch('/api/rooms')
+                .then(response => response.json())
+                .then(setRooms);
+        }
+    }, [user]);
 
     return (
         <div id="page-container" style={{display: 'flex'}}>
@@ -26,14 +28,14 @@ export const App = () => {
                         <Route path="/login">
                             <LoginPage onSuccess={setUser} />
                         </Route>
-                        <Route path="/rooms/:roomId">
+                        <Route path="/rooms/:roomKey">
                             <Room rooms={rooms} />
                         </Route>
                         <Route path="/rooms">
                             <RoomList rooms={rooms} />
                         </Route>
                         <Route path="/create-room">
-                            <CreateRoom onCreate={room => setRooms(rooms.concat([room])) } />
+                            <CreateRoom onSave={room => setRooms(rooms.concat([room])) } />
                         </Route>
                         <Route path="/upload-piece">
                             <UploadPiece />

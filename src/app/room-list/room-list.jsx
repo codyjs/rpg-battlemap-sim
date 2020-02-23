@@ -10,7 +10,7 @@ export const RoomList = (props) => {
             <Link to="/">&lt;&lt; Back</Link>
             {(!props.rooms || props.rooms.length === 0)
                 ? <p>Loading...</p>
-                : <ul>{props.rooms.map(room => <RoomListing room={room} key={room.id} />)}</ul>
+                : <ul>{props.rooms.map(room => <RoomListing room={room} key={room._id} />)}</ul>
             }
             <Link to="/create-room">Create Room</Link>
         </div>

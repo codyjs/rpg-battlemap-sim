@@ -1,6 +1,6 @@
-import { RoomData } from '../../app/map-canvas/types';
 import * as WebSocket from 'ws';
 import { Point } from '../../app/canvas-framework/types';
+import { RoomData } from '../models/room-model';
 
 export enum MessageType {
     Leave = 'leave',
@@ -16,7 +16,7 @@ export interface MovePieceMessage {
 export class RoomWebsocketServer {
 
     public connect(ws: WebSocket, room: RoomData): void {
-        room.connections.push(ws);
+        room.connections ? room.connections.push(ws) : room.connections = [ws];
         ws.onmessage = (e: WebSocket.MessageEvent) => {
             this.handleMessage(e.data, ws, room);
         };
@@ -47,12 +47,22 @@ export class RoomWebsocketServer {
     }
 
     private handleGetRoomData(room: RoomData, ws: WebSocket) {
+        // TODO: Remove this temporary assignment
+        if (!room.pieces) {
+            room.pieces = [
+                { x: 5, y: 3, h: 1, w: 1, image: 'Tarl.png', name: 'Tarl' },
+                { x: 7, y: 5, h: 1, w: 1, image: 'Kor\'tan.png', name: 'Kor\'Tan' },
+                { x: 6, y: 3, h: 2, w: 2, image: 'owlbear.png', name: 'owlbear' },
+                { x: 6, y: 6, h: 1, w: 1, image: 'assassin.png', name: 'assassin' }
+            ];
+        }
+
         const payload = {
             messageType: 'getRoomData',
             grid: room.grid,
             pieces: room.pieces,
             backdrop: room.backdrop,
-            roomName: room.roomName
+            roomName: room.name,
         }
         ws.send(JSON.stringify(payload));
     }

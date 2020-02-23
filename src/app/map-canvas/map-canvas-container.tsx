@@ -11,7 +11,7 @@ export const MapCanvasContainer = (props: any) => {
     const canvasRef: MutableRefObject<HTMLCanvasElement> = useRef(null);
     useEffect(() => {
         let mapCanvas: MapCanvas = null;
-        const wsClient = new BattlemapWebsocketClient(props.room.id);
+        const wsClient = new BattlemapWebsocketClient(props.roomKey);
 
         wsClient.onRoomData((roomData: RoomData) => {
             setRoomName(roomData.roomName);
@@ -23,6 +23,8 @@ export const MapCanvasContainer = (props: any) => {
         });
 
         wsClient.onPieceMoved((pieceId: number, to: Point) => mapCanvas.movePiece(pieceId, to));
+
+        wsClient.connect();
 
         return () => {
             mapCanvas && mapCanvas.dispose();
