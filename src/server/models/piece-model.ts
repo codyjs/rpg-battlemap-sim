@@ -7,6 +7,7 @@ export interface PieceData {
     y: number;
     w: number;
     h: number;
+    _id: any;
 }
 
 export interface PieceModel extends PieceData, Document {}

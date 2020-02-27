@@ -64,4 +64,9 @@ function configureAuthentication(app: express.Application): void {
         }));
         app.post('/api/login', passport.authenticate('local'), (req, res) => res.send(req.user));
     }
+
+    app.get('/api/logout', (req, res) => {
+        req.logout();
+        res.sendStatus(200);
+    });
 }

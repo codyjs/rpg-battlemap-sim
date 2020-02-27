@@ -1,5 +1,5 @@
 import { MutableRefObject } from "react";
-import { Rect, DrawType, RectEventData } from '../canvas-framework/types';
+import { Rect, DrawType, RectEventData } from '../../canvas-framework/types';
 
 const SCALING_RECT_SIZE = 7;
 

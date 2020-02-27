@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import * as express from 'express';
 import * as multer from 'multer';
 import { requireAuth } from '../middleware/require-auth';
@@ -18,8 +17,8 @@ export class PieceRouter {
   }
 
   private getPieces(req: express.Request, res: express.Response) {
-    const data = fs.readdirSync('src/server/public/images/pieces');
-    res.send({ data });
+    const user = req.user as UserModel;
+    res.send(user.pieces);
   }
 
   private savePiece(req: express.Request, res: express.Response) {

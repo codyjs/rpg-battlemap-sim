@@ -1,4 +1,4 @@
-import { Rect, DrawType } from "../canvas-framework/types";
+import { Rect, DrawType } from "../../canvas-framework/types";
 
 export class CanvasBackdrop implements Rect {
     x: number;

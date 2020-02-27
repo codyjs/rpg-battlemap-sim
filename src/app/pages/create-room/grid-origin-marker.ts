@@ -1,4 +1,4 @@
-import { Rect, DrawType, RectEventData, Grid, Point } from '../canvas-framework/types';
+import { Rect, DrawType, RectEventData, Grid, Point } from '../../canvas-framework/types';
 import { MutableRefObject } from 'react';
 
 export class GridOriginMarker implements Rect {

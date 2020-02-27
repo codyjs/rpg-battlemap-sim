@@ -1,6 +1,6 @@
-import { CanvasFramework } from "../canvas-framework/index";
+import { CanvasFramework } from "../../canvas-framework/index";
 import { MutableRefObject } from 'react';
-import { Grid, DrawType, Rect, Point } from '../canvas-framework/types';
+import { Grid, DrawType, Rect, Point } from '../../canvas-framework/types';
 import { GridOriginMarker } from "./grid-origin-marker";
 import { BackdropScalingRect } from "./backdrop-scaling-rect";
 

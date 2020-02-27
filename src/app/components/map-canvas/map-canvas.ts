@@ -1,11 +1,11 @@
 import { MutableRefObject } from 'react';
-import { CanvasFramework } from '../canvas-framework/canvas-framework';
-import { Rect, Grid, DrawType, Point } from '../canvas-framework/types';
+import { CanvasFramework } from '../../canvas-framework/canvas-framework';
+import { Rect, Grid, DrawType, Point } from '../../canvas-framework/types';
 import { CanvasPiece } from './canvas-piece';
 import { CanvasBackdrop } from './canvas-backdrop';
 import { BattlemapWebsocketClient } from './battlemap-websocket-client';
-import { BackdropData } from '../../server/models/backdrop-model';
-import { PieceData } from '../../server/models/piece-model';
+import { BackdropData } from '../../../server/models/backdrop-model';
+import { PieceData } from '../../../server/models/piece-model';
 
 export class MapCanvas {
     private canvasFramework: CanvasFramework = null;

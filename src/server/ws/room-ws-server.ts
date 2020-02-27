@@ -50,10 +50,10 @@ export class RoomWebsocketServer {
         // TODO: Remove this temporary assignment
         if (!room.pieces) {
             room.pieces = [
-                { x: 5, y: 3, h: 1, w: 1, image: 'Tarl.png', name: 'Tarl' },
-                { x: 7, y: 5, h: 1, w: 1, image: 'Kor\'tan.png', name: 'Kor\'Tan' },
-                { x: 6, y: 3, h: 2, w: 2, image: 'owlbear.png', name: 'owlbear' },
-                { x: 6, y: 6, h: 1, w: 1, image: 'assassin.png', name: 'assassin' }
+                { x: 5, y: 3, h: 1, w: 1, image: 'Tarl.png', name: 'Tarl', _id: 'foobar' },
+                { x: 7, y: 5, h: 1, w: 1, image: 'Kor\'tan.png', name: 'Kor\'Tan', _id: 'foobar' },
+                { x: 6, y: 3, h: 2, w: 2, image: 'owlbear.png', name: 'owlbear', _id: 'foobar' },
+                { x: 6, y: 6, h: 1, w: 1, image: 'assassin.png', name: 'assassin', _id: 'foobar' }
             ];
         }
 
@@ -62,7 +62,7 @@ export class RoomWebsocketServer {
             grid: room.grid,
             pieces: room.pieces,
             backdrop: room.backdrop,
-            roomName: room.name,
+            name: room.name,
         }
         ws.send(JSON.stringify(payload));
     }

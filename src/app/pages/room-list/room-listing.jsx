@@ -1,4 +1,4 @@
-import { createElement, useState } from 'react';
+import { createElement, useState, Fragment } from 'react';
 import { Redirect } from 'react-router-dom';
 
 export const RoomListing = (props) => {
@@ -11,8 +11,8 @@ export const RoomListing = (props) => {
     };
 
     return roomKey ? <Redirect to={`/rooms/${roomKey}`} /> : (
-        <li>
+        <Fragment>
             {props.room.name} <button onClick={openRoom}>Open</button>
-        </li>
+        </Fragment>
     );
 };

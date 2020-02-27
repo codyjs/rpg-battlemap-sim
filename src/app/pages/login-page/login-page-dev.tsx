@@ -1,7 +1,7 @@
 import { createElement, FC, useState, FormEvent, useContext } from "react";
 import { Redirect } from 'react-router-dom';
-import { UserData } from "../../server/models/user-model";
-import { UserContext } from '../context';
+import { UserData } from "../../../server/models/user-model";
+import { UserContext } from '../../context';
 
 export interface LoginPageProps {
     onSuccess: (user: UserData) => void;
@@ -30,9 +30,9 @@ export const LoginPage: FC<LoginPageProps> = (props) => {
             <h1>Dev Login</h1>
             <form onSubmit={handleLoginSubmit}>
                 <label htmlFor="username">Username</label>
-                <input id="username" type="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+                <input id="username" type="username" name="username" value={username} onChange={(e) => setUsername(e.target.value)} />
                 <label htmlFor="username">Password</label>
-                <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <input id="password" type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 <button type="submit">Submit</button>
             </form>
         </div>

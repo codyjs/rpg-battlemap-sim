@@ -1,19 +1,20 @@
 import { useContext, createElement, Fragment, FC } from 'react';
 import { Link } from 'react-router-dom';
-import { UserContext } from '../context';
+import { UserContext } from '../../context';
+import { NavbarList } from '../../components/navbar-list';
 
 export const MainMenu: FC<{}> = () => {
     const user = useContext(UserContext);
 
     return (
         <div className="left-bar">
-            <h1>Battlemap Simulator</h1>
+            <h2>Main Menu</h2>
             {user ? (
-                <Fragment>
-                    <Link to="/upload-piece">Upload Piece</Link>
+                <NavbarList>
+                    <Link to="/pieces">Your Pieces</Link>
                     <Link to="/rooms">Rooms</Link>
-                    <a href="">Logout</a>
-                </Fragment>
+                    <Link to="/logout">Logout</Link>
+                </NavbarList>
             ) : (
                 <Link to="/login">Login</Link>
             )}

@@ -1,7 +1,8 @@
 import { createElement, Fragment, useState, useRef, useEffect, FC } from 'react';
 import { Link, Redirect } from 'react-router-dom';
 import { MapBuilderCanvas } from './map-builder-canvas';
-import { RoomModel } from '../../server/models/room-model';
+import { RoomModel } from '../../../server/models/room-model';
+import { BackButton } from '../../components/back-button';
 
 interface CreateRoomProps {
     onSave: (room: RoomModel) => void;
@@ -87,8 +88,8 @@ export const CreateRoom: FC<CreateRoomProps> = (props) => {
     return (
         <Fragment>
             <div className="left-bar">
-                <Link to="/">&lt;&lt; Back</Link>
                 <h1>New Room</h1>
+                <BackButton to="/rooms" />
                 <label htmlFor="roomName">Name: </label>
                 <input id="name" onChange={(e) => setRoomName(e.target.value)} value={roomName} />
                 <label htmlFor="backdrop-select">Backdrop Image:</label>

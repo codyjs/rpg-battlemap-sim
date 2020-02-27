@@ -1,10 +1,12 @@
 import * as express from 'express';
-import { User } from '../models/user-model';
+import { User, UserModel } from '../models/user-model';
+import { requireAuth } from '../middleware/require-auth';
 
 export class UserRouter {
     public getRouter() {
         const router = express.Router();
         router.post('/', this.addUser);
+        router.get('/info', requireAuth, this.getUserInfo)
         return router;
     }
 
@@ -14,5 +16,10 @@ export class UserRouter {
             password: req.body.password,
             createdAt: new Date()
         }).then(res.send);
+    }
+
+    private getUserInfo(req: express.Request, res: express.Response) {
+        const user = req.user as UserModel;
+        res.send(user);
     }
 }

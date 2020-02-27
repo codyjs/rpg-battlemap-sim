@@ -1,7 +1,7 @@
-import { Rect, Grid, DrawType, RectEventData, Point } from '../canvas-framework/types';
-import { CanvasFramework } from '../canvas-framework/index';
+import { Rect, Grid, DrawType, RectEventData, Point } from '../../canvas-framework/types';
+import { CanvasFramework } from '../../canvas-framework/index';
 import { MutableRefObject } from 'react';
-import { PieceData } from '../../server/models/piece-model';
+import { PieceData } from '../../../server/models/piece-model';
 
 export class CanvasPiece implements Rect {
     public x: number;

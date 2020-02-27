@@ -5,6 +5,11 @@ body {
 
 a {
     color: lightsteelblue;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
 }
 
 input[type="file"] {
@@ -26,4 +31,5 @@ input[type="file"] {
     width: 200px;
     margin-right: 10px;
     padding: 4px;
+    flex-grow: 0;
 }
