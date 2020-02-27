@@ -1,5 +1,5 @@
-import { RoomData } from "./types";
 import { Point } from '../canvas-framework/types';
+import { RoomData } from '../../server/models/room-model';
 
 export class BattlemapWebsocketClient {
     private ws: WebSocket = null;

@@ -1,9 +1,9 @@
 import { createElement, Fragment, useEffect, useState, useRef, MutableRefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { MapCanvas } from './map-canvas';
-import { Grid, Point } from '../canvas-framework/types';
+import { Grid, Point, DrawType } from '../canvas-framework/types';
 import { BattlemapWebsocketClient } from './battlemap-websocket-client';
-import { RoomData } from './types';
+import { RoomData } from '../../server/models/room-model';
 
 export const MapCanvasContainer = (props: any) => {
 
@@ -14,10 +14,10 @@ export const MapCanvasContainer = (props: any) => {
         const wsClient = new BattlemapWebsocketClient(props.roomKey);
 
         wsClient.onRoomData((roomData: RoomData) => {
-            setRoomName(roomData.roomName);
+            setRoomName(roomData.name);
             mapCanvas = new MapCanvas(canvasRef, wsClient);
             mapCanvas.setBackdrop(roomData.backdrop);
-            mapCanvas.setGrid(new Grid(roomData.grid, roomData.grid.tileSize));
+            mapCanvas.setGrid(new Grid({renderPriority: 0, drawType: DrawType.Grid, ...roomData.grid}, roomData.grid.tileSize));
             mapCanvas.addPieces(roomData.pieces);
             mapCanvas.init();
         });

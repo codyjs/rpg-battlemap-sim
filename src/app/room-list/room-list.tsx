@@ -1,8 +1,13 @@
-import { createElement } from 'react';
+import { createElement, FC } from 'react';
 import { Link } from 'react-router-dom';
-import { RoomListing } from '../room-listing';
+import { RoomListing } from './room-listing';
+import { RoomData } from '../../server/models/room-model';
 
-export const RoomList = (props) => {
+interface RoomListProps {
+    rooms: RoomData[]
+}
+
+export const RoomList: FC<RoomListProps> = (props) => {
     
     return (
         <div  style={{display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#55b', width: '200px', marginRight: '10px', padding: '4px'}}>

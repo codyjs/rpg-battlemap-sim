@@ -1,8 +1,8 @@
-import { createElement } from 'react';
+import { createElement, FC } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { MapCanvasContainer } from '../map-canvas';
 
-export const Room = (props) => {
+export const Room: FC<{}> = () => {
     const { roomKey } = useParams();
 
     return (

@@ -3,7 +3,7 @@ import { Redirect } from 'react-router-dom';
 import { UserData } from "../../server/models/user-model";
 import { UserContext } from '../context';
 
-interface LoginPageProps {
+export interface LoginPageProps {
     onSuccess: (user: UserData) => void;
 }
 

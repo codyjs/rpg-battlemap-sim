@@ -1,8 +1,8 @@
-import { useContext, createElement, Fragment } from 'react';
+import { useContext, createElement, Fragment, FC } from 'react';
 import { Link } from 'react-router-dom';
 import { UserContext } from '../context';
 
-export const MainMenu = () => {
+export const MainMenu: FC<{}> = () => {
     const user = useContext(UserContext);
 
     return (

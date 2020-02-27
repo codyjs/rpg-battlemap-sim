@@ -2,9 +2,10 @@ import { MutableRefObject } from 'react';
 import { CanvasFramework } from '../canvas-framework/canvas-framework';
 import { Rect, Grid, DrawType, Point } from '../canvas-framework/types';
 import { CanvasPiece } from './canvas-piece';
-import { MapPiece, BackdropData } from './types';
 import { CanvasBackdrop } from './canvas-backdrop';
 import { BattlemapWebsocketClient } from './battlemap-websocket-client';
+import { BackdropData } from '../../server/models/backdrop-model';
+import { PieceData } from '../../server/models/piece-model';
 
 export class MapCanvas {
     private canvasFramework: CanvasFramework = null;
@@ -22,7 +23,7 @@ export class MapCanvas {
         this.canvasFramework.init();
     }
 
-    public addPieces(pieces: MapPiece[]) {
+    public addPieces(pieces: PieceData[]) {
         pieces.forEach((piece, idx) => {
             const canvasPiece = new CanvasPiece(this.canvasFramework, this.canvasRef, this.grid, piece, idx);
             canvasPiece.onMove((pieceId: number, to: Point) => this.wsClient.movePiece(pieceId, to));

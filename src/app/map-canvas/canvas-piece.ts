@@ -1,7 +1,7 @@
 import { Rect, Grid, DrawType, RectEventData, Point } from '../canvas-framework/types';
-import { MapPiece } from './types';
 import { CanvasFramework } from '../canvas-framework/index';
 import { MutableRefObject } from 'react';
+import { PieceData } from '../../server/models/piece-model';
 
 export class CanvasPiece implements Rect {
     public x: number;
@@ -16,7 +16,7 @@ export class CanvasPiece implements Rect {
     private onMoveCallback: (pieceId: number, to: Point) => void;
 
     constructor(private canvasFramework: CanvasFramework, private canvasRef: MutableRefObject<HTMLCanvasElement>,
-            private grid: Grid, piece: MapPiece, private id: number) {
+            private grid: Grid, piece: PieceData, private id: number) {
         this.x = piece.x * this.grid.tileSize + this.grid.x;
         this.y = piece.y * this.grid.tileSize + this.grid.y;
         this.h = piece.h * this.grid.tileSize;

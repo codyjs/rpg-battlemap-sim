@@ -5,7 +5,7 @@ module.exports = function(env) {
     const appTarget = env.APP_TARGET || 'dev';
     return {
         context: __dirname,
-        entry: './src/app/index.jsx',
+        entry: './src/app/index.tsx',
         devtool: 'inline-source-map',
         devServer: {
             contentBase: ['./src/server/public'],

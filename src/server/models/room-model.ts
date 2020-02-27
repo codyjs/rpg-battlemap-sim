@@ -11,6 +11,7 @@ export interface RoomData {
     roomKey?: number;
     connections?: WebSocket[]
     pieces?: PieceData[];
+    _id: any;
 }
 
 export interface RoomModel extends RoomData, Document {

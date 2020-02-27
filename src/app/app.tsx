@@ -7,9 +7,10 @@ import { Room } from './room';
 import { CreateRoom } from './create-room';
 import { UserContext } from './context';
 import { LoginPage } from './login-page';
+import { RoomData } from '../server/models/room-model';
 
 export const App = () => {
-    const [rooms, setRooms] = useState([]);
+    const [rooms, setRooms] = useState<RoomData[]>([]);
     const [user, setUser] = useState(null);
 
     useEffect(() => {
@@ -29,7 +30,7 @@ export const App = () => {
                             <LoginPage onSuccess={setUser} />
                         </Route>
                         <Route path="/rooms/:roomKey">
-                            <Room rooms={rooms} />
+                            <Room />
                         </Route>
                         <Route path="/rooms">
                             <RoomList rooms={rooms} />
