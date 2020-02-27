@@ -27,10 +27,10 @@ export const LoginPage: FC<LoginPageProps> = (props) => {
 
     return !user ? (
         <div className="left-bar">
-            <h1>Dev Login</h1>
+            <h2>Dev Login</h2>
             <form onSubmit={handleLoginSubmit}>
                 <label htmlFor="username">Username</label>
-                <input id="username" type="username" name="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+                <input id="username" type="text" name="username" value={username} onChange={(e) => setUsername(e.target.value)} />
                 <label htmlFor="username">Password</label>
                 <input id="password" type="password" name="password" value={password} onChange={(e) => setPassword(e.target.value)} />
                 <button type="submit">Submit</button>
